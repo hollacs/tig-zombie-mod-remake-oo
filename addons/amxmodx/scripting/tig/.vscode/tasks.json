@@ -1,0 +1,39 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build amxx",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "compile.py"
+            ],
+            "group": "build",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": {
+                "owner": "AMXXPawn",
+                "fileLocation": "absolute",
+                "pattern": {
+                    "regexp": "^(.+)\\((\\d+)(?: -- \\d+)?\\) : (error|warning) (\\d+): (.+)$",
+                    "file": 1,
+                    "line": 2,
+                    "severity": 3,
+                    "message": 5
+                }
+            }
+        },
+        {
+            "label": "copy amxx",
+            "type": "shell",
+            "command": "./copy.bat",
+            "presentation": {
+                "reveal": "silent"
+            },
+            "problemMatcher": []
+        }
+    ]
+}
