@@ -21,7 +21,7 @@ with shelve.open(output_file) as my_dict:
                     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
                     print(result.stdout)
                     print(result.stderr)
-                    if result.stdout[110] == "e":
+                    if result.stdout.find("error") == -1:
                         my_dict[file] = modified_time
 
     my_dict.close()
