@@ -11,7 +11,7 @@
     "replace_sounds" : {
         "weapons/knife_hitwall1.wav": ["zombie/claw_miss1.wav", "zombie/claw_miss2.wav"],
         "weapons/knife_slash*": ["zombie/claw_miss1.wav", "zombie/claw_miss2.wav"],
-        "weapons/knife_hit*": ["zombie/claw_strike1.wav", "zombie/claw_strike2.wav", "zombie/claw_strike3.wav"],
+        "weapons/knife_hit*": ["zombie/claw_strike1.wav", "zombie/claw_strike2.wav"],
         "weapons/knife_stab.wav": ["zombie/claw_strike3.wav"],
         "player/bhit_flesh-*": ["player/bhit_flesh-1.wav", "player/bhit_flesh-2.wav", "player/bhit_flesh-3.wav"],
         "player/headshot*": ["player/headshot1.wav", "player/headshot2.wav", "player/headshot3.wav"]
