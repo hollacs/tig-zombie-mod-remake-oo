@@ -38,7 +38,12 @@ public OnRestartRound()
 			continue;
 		
 		if ((TEAM_TERRORIST <= TeamName:get_member(i, m_iTeam) <= TEAM_CT))
-			oo_playerclass_change(i, "Human");
+		{
+			if (oo_playerclass_isa(i, "Zombie"))
+				set_member(i, m_bNotKilled, false);
+
+			oo_playerclass_change(i, "Human", false);
+		}
 	}
 
 	remove_task(TASK_GAMESTART);
