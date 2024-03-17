@@ -1,0 +1,11 @@
+{
+    "player_models" : {
+        "arctic": false, "guerilla": false, "leet": false, "terror": false
+    },
+    "v_models" : {
+        "weapon_knife": "models/v_knife_r.mdl"
+    },
+    "p_models" : {
+        "weapon_knife": "models/p_knife.mdl"
+    }
+}
