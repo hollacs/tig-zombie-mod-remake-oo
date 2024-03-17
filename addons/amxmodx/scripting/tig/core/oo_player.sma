@@ -80,8 +80,8 @@ public Player@Ctor(player)
 {
 	new this = oo_this();
 	oo_set(this, "player_id", player);
-	oo_set(this, "max_health", 100.0);
-	oo_set(this, "max_armor", 100.0);
+	oo_set(this, "max_health", 100);
+	oo_set(this, "max_armor", 100);
 
 	ExecuteForward(g_Forward[FW_CTOR], g_ForwardResult, player);
 }
@@ -161,7 +161,8 @@ public Player@Respawn()
 {
 	new id = oo_get(oo_this(), "player_id");
 	ExecuteForward(g_Forward[FW_RESPAWN], g_ForwardResult, id);
-	rg_round_respawn(id);
+	if (g_ForwardResult == PLUGIN_CONTINUE)
+		rg_round_respawn(id);
 }
 
 public plugin_natives()
