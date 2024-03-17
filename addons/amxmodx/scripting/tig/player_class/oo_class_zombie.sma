@@ -31,7 +31,6 @@ public oo_init()
 		oo_mthd(cl, "ChangeSound", @cell, @string, @cell, @cell, @cell, @cell);
 		oo_mthd(cl, "OnGiveDamage", @cell, @cell, @byref, @cell);
 		oo_mthd(cl, "OnThink");
-		oo_mthd(cl, "OnTouchWeapon", @int(ent));
 	}
 }
 
@@ -44,10 +43,6 @@ public plugin_precache()
 public plugin_init()
 {
 	register_plugin("[OO] Class: Zombie", "0.1", "holla");
-
-	RegisterHam(Ham_Touch, "weaponbox", 	 "OnWeaponTouch");
-	RegisterHam(Ham_Touch, "armoury_entity", "OnWeaponTouch");
-	RegisterHam(Ham_Touch, "weapon_shield",  "OnWeaponTouch");
 
 	oo_call(g_oClassInfo, "CreateCvars");
 
@@ -227,21 +222,6 @@ public Zombie@OnGiveDamage(inflictor, victim, &Float:damage, damagebits)
 		}
 	}
 	return HC_CONTINUE;
-}
-
-public Zombie@OnTouchWeapon(ent)
-{
-	return false;
-}
-
-public OnWeaponTouch(ent, toucher)
-{
-	if (is_user_alive(toucher) && oo_playerclass_isa(toucher, "Zombie"))
-	{
-		return oo_call(oo_playerclass_get(toucher), "OnTouchWeapon", ent) ? HAM_IGNORED : HAM_SUPERCEDE;
-	}
-
-	return HAM_IGNORED;
 }
 
 stock bool:IsBackStab(attacker, victim)
