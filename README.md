@@ -1,7 +1,14 @@
 As a complete example of using [oo_amxx](https://github.com/hollacs/oo_amxx/tree/no-std). \
 Working in progress. \
  \
-Recommended ReGameDLL CVars:
+### Installation Requirements
+- REHLDS
+- METAMOD-R
+- REGAMEDLL
+- REAPI
+- [OO](https://github.com/hollacs/oo_amxx/tree/no-std)
+
+### Recommended ReGameDLL CVars:
 ```
 mp_autoteambalance "0"
 mp_round_infinite "bf"
