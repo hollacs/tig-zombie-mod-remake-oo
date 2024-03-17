@@ -38,6 +38,12 @@ stock bool:oo_player_is_respawning(id)
 	return bool:oo_call(player_o, "IsRespawnPending");
 }
 
+stock Float:oo_player_get_respawn_time(id)
+{
+	CHECK_PLAYER(player_o) return false;
+	return Float:oo_call(player_o, "GetRespawnTime");
+}
+
 stock oo_player_get_max_armor(id)
 {
 	CHECK_PLAYER(player_o) return 0;

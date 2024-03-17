@@ -57,6 +57,7 @@ public oo_init()
 		oo_var(cl, "player_id", 1);
 		oo_var(cl, "max_health", 1);
 		oo_var(cl, "max_armor", 1);
+		oo_var(cl, "respawn_after", 1);
 
 		oo_ctor(cl, "Ctor", @int(id));
 		oo_dtor(cl, "Dtor");
@@ -70,6 +71,7 @@ public oo_init()
 		oo_mthd(cl, "SetRespawn", @fl(time));
 		oo_mthd(cl, "ResetRespawn");
 		oo_mthd(cl, "IsRespawnPending");
+		oo_mthd(cl, "GetRespawnTime");
 		oo_mthd(cl, "Respawn");
 	}
 }
@@ -128,14 +130,19 @@ public Player@OnResetMaxSpeed()
 
 public Player@SetRespawn(Float:time)
 {
-	new id = oo_get(oo_this(), "player_id");
+	new this = oo_this();
+	oo_set(this, "respawn_after", get_gametime() + time);
+
+	new id = oo_get(this, "player_id");
 	remove_task(id + TASK_RESPAWN);
 	set_task(time, "RespawnPlayer", id + TASK_RESPAWN);
 }
 
 public Player@ResetRespawn()
 {
-	new id = oo_get(oo_this(), "player_id");
+	new this = oo_this();
+	new id = oo_get(this, "player_id");
+	oo_set(this, "respawn_after", 0.0);
 	remove_task(id + TASK_RESPAWN);
 }
 
@@ -145,13 +152,17 @@ public Player@IsRespawnPending()
 	return task_exists(id + TASK_RESPAWN);
 }
 
+public Float:Player@GetRespawnTime()
+{
+	return Float:oo_get(oo_this(), "respawn_after");
+}
+
 public Player@Respawn()
 {
 	new id = oo_get(oo_this(), "player_id");
 	ExecuteForward(g_Forward[FW_RESPAWN], g_ForwardResult, id);
 	rg_round_respawn(id);
 }
-
 
 public plugin_natives()
 {
