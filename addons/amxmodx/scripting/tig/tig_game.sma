@@ -23,6 +23,8 @@ public plugin_init()
 
 	bind_pcvar_float(create_cvar("tig_game_ready_time", "20.0"), cvar_game_ready_time);
 
+	set_member_game(m_bTCantBuy, true);
+
 	OnRestartRound();
 }
 
