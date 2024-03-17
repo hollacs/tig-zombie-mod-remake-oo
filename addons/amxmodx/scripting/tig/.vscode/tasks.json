@@ -12,7 +12,8 @@
             ],
             "group": "build",
             "presentation": {
-                "reveal": "silent"
+                "reveal": "silent",
+                "clear": true
             },
             "problemMatcher": {
                 "owner": "AMXXPawn",
