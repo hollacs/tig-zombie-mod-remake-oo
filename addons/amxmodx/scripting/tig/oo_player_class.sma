@@ -77,7 +77,7 @@ public oo_init()
 		oo_var(cl, "player", 1);
 		oo_var(cl, "player_id", 1);
 
-		oo_ctor(cl, "Ctor", @int(player_o));
+		oo_ctor(cl, "Ctor", @obj(player_o));
 		oo_dtor(cl, "Dtor");
 
 		oo_mthd(cl, "GetCvarPtr", @str(cvar_name));

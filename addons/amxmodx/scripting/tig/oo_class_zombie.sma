@@ -21,7 +21,7 @@ public oo_init()
 		oo_var(cl, "next_idle", 1);
 		oo_var(cl, "next_pain", 1);
 
-		oo_ctor(cl, "Ctor", @int(player));
+		oo_ctor(cl, "Ctor", @obj(player));
 		oo_dtor(cl, "Dtor");
 
 		oo_mthd(cl, "GetClassInfo");
@@ -50,6 +50,22 @@ public plugin_init()
 	RegisterHam(Ham_Touch, "weapon_shield",  "OnWeaponTouch");
 
 	oo_call(g_oClassInfo, "CreateCvars");
+
+	bind_pcvar_float(
+		oo_call(g_oClassInfo, "CreateCvar", "tig_zombie", "idle_sound_time_min", "40"),
+		cvar_idle_sound_time[0]);
+
+	bind_pcvar_float(
+		oo_call(g_oClassInfo, "CreateCvar", "tig_zombie", "idle_sound_time_max", "80"),
+		cvar_idle_sound_time[0]);
+
+	bind_pcvar_float(
+		oo_call(g_oClassInfo, "CreateCvar", "tig_zombie", "pain_sound_time_min", "1.0"),
+		cvar_pain_sound_time[0]);
+
+	bind_pcvar_float(
+		oo_call(g_oClassInfo, "CreateCvar", "tig_zombie", "pain_sound_time_max", "2.0"),
+		cvar_pain_sound_time[1]);
 }
 
 public ZombieClassInfo@CreateCvars()
@@ -64,22 +80,6 @@ public ZombieClassInfo@CreateCvars()
 	oo_call(this, "CreateCvar", "tig_zombie", "health", "1000");
 	oo_call(this, "CreateCvar", "tig_zombie", "gravity", "1.0");
 	oo_call(this, "CreateCvar", "tig_zombie", "speed", "1.0");
-
-	bind_pcvar_float(
-		oo_call(this, "CreateCvar", "tig_zombie", "idle_sound_time_min", "40"),
-		cvar_idle_sound_time[0]);
-
-	bind_pcvar_float(
-		oo_call(this, "CreateCvar", "tig_zombie", "idle_sound_time_max", "80"),
-		cvar_idle_sound_time[0]);
-
-	bind_pcvar_float(
-		oo_call(this, "CreateCvar", "tig_zombie", "pain_sound_time_min", "1.0"),
-		cvar_pain_sound_time[0]);
-
-	bind_pcvar_float(
-		oo_call(this, "CreateCvar", "tig_zombie", "pain_sound_time_max", "2.0"),
-		cvar_pain_sound_time[1]);
 }
 
 public Zombie@Ctor(player)

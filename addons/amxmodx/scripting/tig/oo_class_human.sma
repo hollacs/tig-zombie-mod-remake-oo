@@ -29,7 +29,7 @@ public oo_init()
 	{
 		new const cl[] = "Human";
 
-		oo_ctor(cl, "Ctor", @int(player));
+		oo_ctor(cl, "Ctor", @obj(player));
 		oo_dtor(cl, "Dtor");
 
 		oo_mthd(cl, "GetClassInfo");
