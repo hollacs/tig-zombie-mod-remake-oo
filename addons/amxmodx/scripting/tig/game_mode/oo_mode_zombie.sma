@@ -128,7 +128,7 @@ public ZombieMode@OnThink()
 			new Float:current_time = get_gametime();
 			if (!oo_get(this, "has_intro"))
 			{
-				set_dhudmessage(0, 255, 0, -1.0, 0.3, 0, 0.0, 3.0, 1.0, 1.0);
+				set_dhudmessage(0, 255, 0, -1.0, 0.2, 0, 0.0, 3.0, 1.0, 1.0);
 				show_dhudmessage(0, "病毒在空氣中飄散...");
 				oo_set(this, "has_intro", true);
 				oo_set(this, "countdown_time", current_time + floatmax(CvarWait - 10.0, 0.0));
@@ -146,7 +146,7 @@ public ZombieMode@OnThink()
 					}
 
 					new countdown = floatround(roundstart_time + CvarWait - current_time, floatround_ceil);
-					set_dhudmessage(0, 255, 0, -1.0, 0.3, 0, 0.0, 1.0, 0.0, 0.0);
+					set_dhudmessage(0, 255, 0, -1.0, 0.2, 0, 0.0, 1.0, 0.0, 0.0);
 					show_dhudmessage(0, "遊戲將在 %d 秒後開始", countdown);
 
 					new word[8];
@@ -196,7 +196,7 @@ public ZombieMode@Start()
 
 	set_lights(CvarLights);
 
-	set_dhudmessage(0, 255, 0, -1.0, 0.3, 1, 0.0, 3.0, 0.0, 1.0);
+	set_dhudmessage(0, 255, 0, -1.0, 0.2, 1, 0.0, 3.0, 0.0, 1.0);
 	show_dhudmessage(0, "遊戲開始!");
 }
 
