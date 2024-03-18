@@ -5,8 +5,6 @@
 #include <oo_player_class>
 #include <oo_assets>
 
-#define MAX_USERS MAX_PLAYERS + 1
-
 new GrenadeInfo:g_oGrenadeInfo;
 
 new sprite_trail;
