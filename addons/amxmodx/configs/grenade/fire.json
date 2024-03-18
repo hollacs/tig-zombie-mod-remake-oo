@@ -1,0 +1,16 @@
+{
+	"models" : {
+		//"v_model" : "models/zombie_plague/v_grenade_fire.mdl",
+		"flame" : "sprites/fire.spr"
+	},
+	"sounds" : {
+		"detonate" : ["tig_test/grenade_explode.wav"]
+		//"burning" : ["ctgtest/burning3.wav"]
+	},
+	"sprites" : {
+		"trail" : "sprites/laserbeam.spr",
+		"ring" : "sprites/shockwave.spr",
+		"smoke" : "sprites/black_smoke3.spr",
+		"gibs" : "sprites/xfireball3.spr"
+	}
+} 
