@@ -30,7 +30,7 @@ public HealthStatus@GetName(output[], len)
 	if (health <= max_health * 0.25)
 		return formatex(output, len, "Danger");
 	else if (health <= max_health * 0.5)
-		return formatex(output, len, "Catuion");
+		return formatex(output, len, "Caution");
 
 	return formatex(output, len, "Fine");
 }
