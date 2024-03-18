@@ -1,0 +1,11 @@
+{
+	"models" : {
+		//"v_model" : "models/zombie_plague/v_grenade_flare.mdl"
+	},
+	"sounds" : {
+		"detonate" : ["items/nvg_on.wav"]
+	},
+	"sprites" : {
+		"trail" : "sprites/laserbeam.spr"
+	}
+} 
