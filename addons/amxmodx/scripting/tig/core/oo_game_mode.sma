@@ -308,7 +308,6 @@ public OO_OnPlayerRespawn(id)
 	if (g_oCurrentMode != @null)
 	{
 		new r = oo_call(g_oCurrentMode, "OnPlayerRespawn", id) ? PLUGIN_CONTINUE : PLUGIN_HANDLED;
-		server_print("r");
 		return r;
 	}
 
