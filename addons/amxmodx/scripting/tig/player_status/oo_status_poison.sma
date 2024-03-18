@@ -10,34 +10,17 @@ public plugin_init()
 	register_plugin("[OO] Status: Poison", "0.1", "holla");
 }
 
-public Cmd1(id)
-{
-	oo_playerstatus_add(id, oo_new("PoisonStatus", id, id, 1.0, 1.0, 20));
-}
-
-public Cmd2(id)
-{
-	oo_playerstatus_add(id, oo_new("BurnStatus", id, id, 1.0, 1.0, 20));
-}
-
-public Cmd3(id)
-{
-	oo_playerstatus_add(id, oo_new("FrozenStatus", id, 3.0));
-}
-
 public oo_init()
 {
 	oo_class("PoisonStatus", "SustainedDamage", "PlayerStatus");
 	{
 		new cl[] = "PoisonStatus";
 		oo_ctor(cl, "Ctor", @int(player), @int(attacker), @fl(interval), @fl(damage), @int(times));
-		//oo_dtor(cl, "Dtor");
 
 		oo_mthd(cl, "Death");
 		oo_mthd(cl, "Damage");
 		oo_mthd(cl, "GetName", @stref(output), @int(maxlen));
 		oo_mthd(cl, "OnUpdate");
-		oo_mthd(cl, "Delete");
 
 		oo_smthd(cl, "Add", @int(player), @int(attacker), @fl(interval), @fl(damage), @int(times));
 	}
@@ -109,11 +92,6 @@ public PoisonStatus@Death()
 public PoisonStatus@GetName(output[], maxlen)
 {
 	return formatex(output, maxlen, "Poison");
-}
-
-public PoisonStatus@Delete()
-{
-	oo_call(oo_this(), "PlayerStatus@Delete");
 }
 
 public OO_OnPlayerKilled(id)
