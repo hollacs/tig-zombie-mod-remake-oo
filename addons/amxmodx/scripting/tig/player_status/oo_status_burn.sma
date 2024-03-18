@@ -35,8 +35,6 @@ public oo_init()
 		oo_mthd(cl, "Damage");
 		oo_mthd(cl, "GetName", @stref(output), @int(maxlen));
 		oo_mthd(cl, "OnUpdate");
-		oo_mthd(cl, "GetName", @stref(output), @int(maxlen));
-		oo_mthd(cl, "Delete");
 
 		oo_smthd(cl, "Add", @int(player), @int(attacker), @fl(interval), @fl(damage), @int(times));
 	}
@@ -158,11 +156,6 @@ public BurnStatus@Damage()
 	}
 
 	return false;
-}
-
-public BurnStatus@Delete()
-{
-	oo_call(oo_this(), "PlayerStatus@Delete");
 }
 
 public BurnStatus@GetName(output[], maxlen)
