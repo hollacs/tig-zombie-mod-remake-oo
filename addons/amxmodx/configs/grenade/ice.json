@@ -1,0 +1,16 @@
+{
+	"models" : {
+		//"v_model" : "models/zombie_plague/v_grenade_frost.mdl"
+	},
+	"sounds" : {
+		"detonate" : ["tig_test/frostnova.wav"],
+		"freeze" : ["tig_test/impalehit.wav"],
+		"break" : ["tig_test/impalelaunch1.wav"]
+	},
+	"sprites" : {
+		"trail" : "sprites/laserbeam.spr",
+		"ring" : "sprites/shockwave.spr",
+		"gibs" : "sprites/xspark1.spr",
+		"glass": "models/glassgibs.mdl"
+	}
+} 
