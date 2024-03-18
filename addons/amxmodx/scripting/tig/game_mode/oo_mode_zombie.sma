@@ -190,6 +190,8 @@ public ZombieMode@Start()
 		players[rand] = players[--num];
 
 		oo_playerclass_change(player, "Zombie", true);
+		if (i == 0)
+			rg_give_item(player, "weapon_hegrenade");
 	}
 
 	set_lights(CvarLights);
