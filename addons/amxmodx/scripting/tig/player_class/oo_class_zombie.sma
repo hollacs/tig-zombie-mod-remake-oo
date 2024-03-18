@@ -196,6 +196,7 @@ public Zombie@OnGiveDamage(inflictor, victim, &Float:damage, damagebits)
 				}
 			}
 
+			new Float:armor = Float:get_entvar(victim, var_armorvalue);
 			new anim = get_entvar(attacker, var_weaponanim);
 			if (anim == KNIFE_STABHIT) // stab
 			{
@@ -207,10 +208,16 @@ public Zombie@OnGiveDamage(inflictor, victim, &Float:damage, damagebits)
 
 				if ((pcvar = oo_call(this, "GetCvarPtr", "dmg_stab")))
 					damage *= get_pcvar_float(pcvar) / 65.0;
+
+				if (armor <= 0.0)
+					oo_call(0, "PoisonStatus@Add", victim, attacker, 1.0, 1.0, 10);
 			}
 			else if ((pcvar = oo_call(this, "GetCvarPtr", "dmg_slash"))) // slash
 			{
 				damage *= get_pcvar_float(pcvar) / 15.0;
+
+				if (armor <= 0.0)
+					oo_call(0, "PoisonStatus@Add", victim, attacker, 1.0, 1.0, 3);
 			}
 
 			if ((pcvar = oo_call(this, "GetCvarPtr", "dmg")))
