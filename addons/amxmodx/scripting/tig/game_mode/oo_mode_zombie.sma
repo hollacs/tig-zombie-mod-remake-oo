@@ -1,4 +1,5 @@
 #include <amxmodx>
+#include <amxmisc>
 #include <cstrike>
 #include <engine>
 #include <fakemeta>
@@ -6,10 +7,31 @@
 #include <reapi>
 #include <oo_player_class>
 #include <oo_game_mode>
+#include <oo_assets>
+
+new const g_ObjectiveEnts[][] = {
+	"func_bomb_target",
+	"info_bomb_target",
+	"hostage_entity",
+	"monster_scientist",
+	"func_hostage_rescue",
+	"info_hostage_rescue",
+	"info_vip_start",
+	"func_vip_safetyzone",
+	"func_escapezone"
+};
 
 new Float:CvarRatio;
 new Float:CvarWait;
 new CvarLights[32];
+new CvarMoneyDamage, Float:CvarMoneyHumanDamagedHp;
+new CvarMoneyZombieKilled, CvarMoneyHumanKilled;
+new CvarMoneyHumanWin, CvarMoneyZombieWin;
+
+new Assets:g_oAssets;
+new g_fwEntSpawn;
+
+new Float:g_DamageDealt[MAX_PLAYERS + 1];
 
 public oo_init()
 {
@@ -35,6 +57,7 @@ public oo_init()
 		oo_mthd(cl, "OnRoundEnd", @int(status), @int(event), @fl(delay));
 		oo_mthd(cl, "OnChooseTeam", @int(player), @int(slot));
 		oo_mthd(cl, "OnPlayerSpawn", @int(id));
+		oo_mthd(cl, "OnPlayerTakeDamage", @int(victim), @int(inflictor), @int(attacker), @fl(damage), @int(damagebits));
 		oo_mthd(cl, "OnPlayerKilled", @int(id), @int(attacker), @int(shouldgib));
 		oo_mthd(cl, "OnGiveDefaultItems", @int(id));
 		oo_mthd(cl, "OnPlayerRespawn", @int(id));
@@ -44,21 +67,55 @@ public oo_init()
 public plugin_precache()
 {
 	oo_gamemode_set(oo_new("ZombieMode"));
+
+	static file_path[64];
+	get_configsdir(file_path, charsmax(file_path));
+	format(file_path, charsmax(file_path), "%s/gamemode/zombie.json", file_path);
+
+	g_oAssets = oo_new("Assets");
+	oo_call(g_oAssets, "LoadJson", file_path);
+
+	g_fwEntSpawn = register_forward(FM_Spawn, "OnEntSpawn");
 }
 
 public plugin_init()
 {
 	register_plugin("[OO] Mode: Zombie", "0.1", "holla");
 
-	new pcvar = create_cvar("ctg_gamemode_start_delay", "20");
+	register_message(get_user_msgid("SendAudio"), "Message_SendAudio");
+
+	unregister_forward(FM_Spawn, g_fwEntSpawn);
+
+	new pcvar = create_cvar("tig_gamemode_start_delay", "20");
 	bind_pcvar_float(pcvar, CvarWait);
 
-	pcvar = create_cvar("ctg_gamemode_zombie_ratio", "0.1");
+	pcvar = create_cvar("tig_gamemode_zombie_ratio", "0.1");
 	bind_pcvar_float(pcvar, CvarRatio);
 
-	pcvar = create_cvar("ctg_gamemode_lights", "c");
+	pcvar = create_cvar("tig_gamemode_lights", "c");
 	bind_pcvar_string(pcvar, CvarLights, charsmax(CvarLights));
 	hook_cvar_change(pcvar, "OnCvarLights");
+
+	pcvar = create_cvar("tig_money_damage", "10");
+	bind_pcvar_num(pcvar, CvarMoneyDamage);
+
+	pcvar = create_cvar("tig_money_human_damaged_hp", "400");
+	bind_pcvar_float(pcvar, CvarMoneyHumanDamagedHp);
+
+	pcvar = create_cvar("tig_money_human_killed", "20");
+	bind_pcvar_num(pcvar, CvarMoneyHumanKilled);
+
+	pcvar = create_cvar("tig_money_zombie_killed", "10");
+	bind_pcvar_num(pcvar, CvarMoneyZombieKilled);
+
+	pcvar = create_cvar("tig_money_human_win", "20");
+	bind_pcvar_num(pcvar, CvarMoneyHumanWin);
+
+	pcvar = create_cvar("tig_money_zombie_win", "20");
+	bind_pcvar_num(pcvar, CvarMoneyZombieWin);
+
+	set_member_game(m_bTCantBuy, true);
+	set_member_game(m_bCTCantBuy, true);
 
 	server_cmd("sv_restart 1");
 	server_exec();
@@ -87,6 +144,36 @@ public native_infect_player()
 	new attacker = get_param(2);
 	oo_call(mode_o, "InfectPlayer", id, attacker);
 	return true;
+}
+
+public OnEntSpawn(ent)
+{
+	if (!pev_valid(ent))
+		return FMRES_IGNORED;
+
+	static classname[32];
+	get_entvar(ent, var_classname, classname, charsmax(classname));
+	for (new i = 0; i < sizeof g_ObjectiveEnts; i++)
+	{
+		if (equal(classname, g_ObjectiveEnts[i]))
+		{
+			rg_remove_entity(ent);
+			return FMRES_SUPERCEDE;
+		}
+	}
+
+	return FMRES_IGNORED;
+}
+
+public Message_SendAudio(msgid, msgdest, id)
+{
+	static audio[17];
+	get_msg_arg_string(2, audio, charsmax(audio));
+	
+	if(equal(audio[7], "terwin") || equal(audio[7], "ctwin"))
+		return PLUGIN_HANDLED;
+	
+	return PLUGIN_CONTINUE;
 }
 
 public OnCvarLights(pcvar, const old_value[], const new_value[])
@@ -198,12 +285,44 @@ public ZombieMode@Start()
 
 	set_dhudmessage(0, 255, 0, -1.0, 0.2, 1, 0.0, 3.0, 0.0, 1.0);
 	show_dhudmessage(0, "遊戲開始!");
+
+	static sound[64];
+	if (AssetsGetRandomGeneric(g_oAssets, "game_start", sound, charsmax(sound)))
+		client_cmd(0, "spk ^"%s^"", sound);
 }
 
 public ZombieMode@OnRoundEnd(WinStatus:win, ScenarioEventEndRound:event, Float:tmDelay)
 {
 	new this = oo_this();
 	oo_call(this, "GameMode@OnRoundEnd", win, event, tmDelay);
+
+	switch (win)
+	{
+		case WINSTATUS_TERRORISTS:
+		{
+			for (new i = 1; i <= MaxClients; i++)
+			{
+				if (is_user_connected(i) && get_member(i, m_iMenu) != Menu_ChooseAppearance &&
+					(TEAM_TERRORIST <= TeamName:get_member(i, m_iTeam) <= TEAM_CT) &&
+					oo_playerclass_isa(i, "Zombie"))
+				{
+					rg_add_account(i, CvarMoneyZombieWin);
+				}
+			}
+		}
+		case WINSTATUS_CTS:
+		{
+			for (new i = 1; i <= MaxClients; i++)
+			{
+				if (is_user_connected(i) && get_member(i, m_iMenu) != Menu_ChooseAppearance &&
+					(TEAM_TERRORIST <= TeamName:get_member(i, m_iTeam) <= TEAM_CT) &&
+					oo_playerclass_isa(i, "Human"))
+				{
+					rg_add_account(i, CvarMoneyHumanWin);
+				}
+			}
+		}
+	}
 }
 
 public ZombieMode@CheckWinConditions()
@@ -239,6 +358,14 @@ public ZombieMode@CheckWinConditions()
 	if (spawnable_count > 1 && human_count < 1) // all humans are dead
 	{
 		rg_round_end(5.0, WINSTATUS_TERRORISTS, ROUND_TERRORISTS_WIN, "Zombies Win");
+
+		set_dhudmessage(255, 50, 50, -1.0, 0.3, 0, 0.0, 3.0, 1.0, 1.0);
+		show_dhudmessage(0, "Zombies Win");
+
+		static sound[64];
+		if (AssetsGetRandomGeneric(g_oAssets, "zombies_win", sound, charsmax(sound)))
+			client_cmd(0, "spk ^"%s^"", sound);
+
 		return true;
 	}
 
@@ -277,7 +404,15 @@ public ZombieMode@OnRoundTimeExpired()
 
 	if (human_count > 0 && zombie_count > 0 && spawnable_count > 0)
 	{
-		rg_round_end(5.0, WINSTATUS_CTS, ROUND_CTS_WIN, "Survivors Win");
+		oo_call(oo_this(), "RoundEnd", WINSTATUS_CTS, ROUND_CTS_WIN, "Survivors Win");
+
+		set_dhudmessage(0, 255, 0, -1.0, 0.3, 0, 0.0, 3.0, 1.0, 1.0);
+		show_dhudmessage(0, "Humans Win");
+
+		static sound[64];
+		if (AssetsGetRandomGeneric(g_oAssets, "survivors_win", sound, charsmax(sound)))
+			client_cmd(0, "spk ^"%s^"", sound);
+
 		return;
 	}
 
@@ -298,6 +433,18 @@ public ZombieMode@OnPlayerKilled(id, attacker, shouldgib)
 	{
 		oo_player_set_respawn(id, 5.0);
 	}
+
+	if (is_user_connected(attacker) && oo_playerclass_isa(attacker, "Human"))
+	{
+		if (oo_playerclass_isa(id, "Zombie"))
+		{
+			rg_add_account(attacker, CvarMoneyZombieKilled);
+		}
+		else
+		{
+			rg_add_account(attacker, CvarMoneyHumanKilled);
+		}
+	}
 }
 
 public ZombieMode@OnPlayerRespawn(id)
@@ -312,6 +459,23 @@ public ZombieMode@OnPlayerRespawn(id)
 	}
 
 	return true;
+}
+
+public ZombieMode@OnPlayerTakeDamage(victim, inflictor, attacker, Float:damage, damagebits)
+{
+	if ((damagebits & DMG_BULLET) && inflictor == attacker && is_user_connected(attacker))
+	{
+		if (oo_playerclass_isa(attacker, "Human") && oo_playerclass_isa(victim, "Zombie"))
+		{
+			g_DamageDealt[attacker] += damage;
+
+			if (g_DamageDealt[attacker] >= CvarMoneyHumanDamagedHp)
+			{
+				rg_add_account(attacker, CvarMoneyDamage);
+				g_DamageDealt[attacker] = 0.0;
+			}
+		}
+	}
 }
 
 public ZombieMode@InfectPlayer(victim, attacker)
@@ -337,7 +501,15 @@ public ZombieMode@InfectPlayer(victim, attacker)
 	new PlayerClass:class_o = any:oo_playerclass_change(victim, "Zombie", false);
 	oo_call(class_o, "SetProperties", false);
 
-	rg_set_user_team(victim, TEAM_TERRORIST, MODEL_UNASSIGNED, false, true)
+	new PlayerClassInfo:info_o = any:oo_call(class_o, "GetClassInfo");
+	if (info_o != @null)
+	{
+		static sound[64];
+		if (AssetsGetRandomSound(info_o, "infect", sound, charsmax(sound)))
+			emit_sound(victim, CHAN_VOICE, sound, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
+	}
+
+	rg_set_user_team(victim, TEAM_TERRORIST, MODEL_UNASSIGNED, false, true);
 
 	remove_task(victim);
 	set_task(0.1, "TaskChangeTeam", victim);
