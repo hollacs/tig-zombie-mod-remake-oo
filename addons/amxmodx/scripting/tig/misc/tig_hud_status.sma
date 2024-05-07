@@ -46,7 +46,7 @@ public UpdateHud(id)
 	else if (status[0] == 'D')
 		color = {255, 10, 10};
 
-	set_hudmessage(color[0], color[1], color[2], 0.015, 0.93, 0, 0.0, 0.3, 0.0, 0.0, 4);
+	set_hudmessage(color[0], color[1], color[2], -1.0, 0.9, 0, 0.0, 0.3, 0.0, 0.0, 4);
 	ShowSyncHudMsg(id, g_HudSyncObj, "HP: %d | AP: %d | Class: %s | Status: %s", 
 		get_user_health(id),
 		get_user_armor(id),
