@@ -39,6 +39,7 @@ public plugin_init()
 	register_plugin("[OO] Player Class", "0.1", "holla");
 
 	register_forward(FM_EmitSound, "OnEmitSound");
+	register_forward(FM_CmdStart, "OnCmdStart");
 
 	register_concmd("oo_playerclass", "CmdPlayerClass", ADMIN_BAN);
 
@@ -96,6 +97,7 @@ public oo_init()
 		oo_mthd(cl, "OnKilled", @int(victim), @int(shouldgibs));
 		oo_mthd(cl, "OnKilledBy", @int(attacker), @int(shouldgibs));
 		oo_mthd(cl, "OnThink");
+		oo_mthd(cl, "OnCmdStart", @int(uc), @int(seed));
 	}
 }
 
@@ -676,6 +678,17 @@ public OnEmitSound(id, channel, const sample[], Float:volume, Float:attn, flags,
 
 	if (g_oPlayerClass[id] != @null)
 		return oo_call(g_oPlayerClass[id], "ChangeSound", channel, sample, volume, attn, flags, pitch) ? FMRES_SUPERCEDE : FMRES_IGNORED;
+
+	return FMRES_IGNORED;
+}
+
+public OnCmdStart(id, uc, seed)
+{
+	if (!is_user_connected(id))
+		return FMRES_IGNORED;
+
+	if (g_oPlayerClass[id] != @null)
+		return oo_call(g_oPlayerClass[id], "OnCmdStart", uc, seed) ? FMRES_SUPERCEDE : FMRES_IGNORED;
 
 	return FMRES_IGNORED;
 }
