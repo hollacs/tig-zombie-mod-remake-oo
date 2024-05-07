@@ -1,0 +1,38 @@
+{
+    "player_models" : {
+        "tig_test_nemesis": false
+    },
+    "v_models" : {
+        "weapon_knife": "models/tig_test/v_nemesis_claw.mdl"
+    },
+    "p_models" : {
+        "weapon_knife": "models/tig_test/p_nemesis_rpg.mdl"
+    },
+    "replace_sounds" : {
+        "weapons/knife_hitwall1.wav": ["tig_test/hulk_punch_1.wav"],
+        "weapons/knife_slash*": ["tig_test/claw_miss_1.wav", "tig_test/claw_miss_2.wav"],
+        "weapons/knife_hit*": ["tig_test/hulk_punch_1.wav"],
+        "weapons/knife_stab.wav": ["tig_test/hulk_punch_1.wav"],
+        "player/bhit_flesh-*": ["player/bhit_flesh-1.wav", "player/bhit_flesh-2.wav", "player/bhit_flesh-3.wav"],
+        "player/headshot*": ["player/headshot1.wav", "player/headshot2.wav", "player/headshot3.wav"],
+        "player/die*": ["tig_test/tank_death_03.wav", "tig_test/tank_death_04.wav"],
+        "player/death*": ["tig_test/tank_death_03.wav", "tig_test/tank_death_04.wav"]
+    },
+    "models": {
+        "rocket": "models/rpgrocket.mdl"
+    },
+    "sounds": {
+        "rocket_fire": ["weapons/rocketfire1.wav"],
+        "rocket_fly": ["weapons/rocket1.wav"],
+        "rocket_explosion": ["weapons/c4_explode1.wav"],
+        "idle": ["tig_test/tank_yell_02.wav", "tig_test/tank_yell_04.wav"],
+        "pain": ["tig_test/hulk_pain_2.wav", "tig_test/hulk_pain_12.wav", "tig_test/hulk_pain_13.wav"]
+    },
+    "sprites": {
+        "trail": "sprites/laserbeam.spr",
+        "fireball1": "sprites/eexplo.spr",
+        "fireball2": "sprites/fexplo.spr",
+        "smoke": "sprites/steam1.spr",
+        "gibs": "models/rockgibs.mdl"
+    }
+}
