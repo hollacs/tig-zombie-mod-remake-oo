@@ -196,11 +196,9 @@ public Grenade@PlayDetonateSound()
 	new GrenadeInfo:info = any:oo_call(this, "GetInfo");
 	if (info != @null)
 	{
-		new Array:sounds_a = AssetsGetSound(info, "detonate");
-		if (sounds_a != Invalid_Array)
+		static sound[64];
+		if (AssetsGetRandomSound(info, "detonate", sound, charsmax(sound)))
 		{
-			static sound[64];
-			ArrayGetString(sounds_a, random(ArraySize(sounds_a)), sound, charsmax(sound));
 			emit_sound(ent, CHAN_WEAPON, sound, 1.0, ATTN_NORM, 0, PITCH_NORM);
 		}
 	}
