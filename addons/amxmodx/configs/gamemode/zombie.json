@@ -1,0 +1,6 @@
+{
+	"generics" : {
+		"zombies_win" : ["sound/tig_test/zombies_win1.wav", "sound/tig_test/zombies_win2.wav", "sound/tig_test/zombies_win3.wav"],
+        "survivors_win" : ["sound/tig_test/survivors_win.wav"]
+	}
+} 
