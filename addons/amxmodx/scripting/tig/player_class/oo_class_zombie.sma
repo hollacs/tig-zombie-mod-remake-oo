@@ -28,6 +28,7 @@ public oo_init()
 		oo_mthd(cl, "RemoveWeapons");
 		oo_mthd(cl, "SetProperties", @bool(set_team));
 		oo_mthd(cl, "SetTeam");
+		oo_mthd(cl, "GetArmorPenetration");
 		oo_mthd(cl, "ChangeSound", @cell, @string, @cell, @cell, @cell, @cell);
 		oo_mthd(cl, "OnGiveDamage", @cell, @cell, @byref, @cell);
 		oo_mthd(cl, "OnThink");
@@ -75,12 +76,18 @@ public ZombieClassInfo@CreateCvars()
 	oo_call(this, "CreateCvar", "tig_zombie", "health", "1000");
 	oo_call(this, "CreateCvar", "tig_zombie", "gravity", "1.0");
 	oo_call(this, "CreateCvar", "tig_zombie", "speed", "1.0");
+	oo_call(this, "CreateCvar", "tig_zombie", "armor_penetration", "0.0");
 }
 
 public Zombie@Ctor(player)
 {
 	oo_super_ctor("PlayerClass", player);
-	oo_set(oo_this(), "next_idle", get_gametime() + random_float(cvar_idle_sound_time[0], cvar_idle_sound_time[1]))
+
+	new this = oo_this();
+	oo_set(this, "next_idle", get_gametime() + random_float(cvar_idle_sound_time[0], cvar_idle_sound_time[1]));
+	
+	new id = oo_get(this, "player_id");
+	set_member(id, m_bNotKilled, false);
 }
 
 public Zombie@Dtor()
@@ -229,6 +236,17 @@ public Zombie@OnGiveDamage(inflictor, victim, &Float:damage, damagebits)
 		}
 	}
 	return HC_CONTINUE;
+}
+
+public Float:Zombie@GetArmorPenetration()
+{
+	new this = oo_this();
+
+	new pcvar = oo_call(this, "GetCvarPtr", "armor_penetration");
+	if (pcvar)
+		return get_pcvar_float(pcvar);
+
+	return 0.0;
 }
 
 stock bool:IsBackStab(attacker, victim)
