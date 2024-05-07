@@ -26,7 +26,7 @@ public oo_init()
 		oo_mthd(cl, "GetModel", @str(key), @stref(model), @int(len));
 		oo_mthd(cl, "GetSprite", @str(key));
 		oo_mthd(cl, "GetSound", @str(key));
-		oo_mthd(cl, "GetGeneric", @str(key), @stref(model), @int(len));
+		oo_mthd(cl, "GetGeneric", @str(key));
 	}
 }
 
@@ -57,14 +57,25 @@ public Assets@Dtor()
 	}
 	TrieDestroy(sounds_t);
 
+	new Trie:generics_t = Trie:oo_get(this, "generics");
+	{
+		new Array:generics_a;
+		while (!TrieIterEnded(iter))
+		{
+			TrieIterGetCell(iter, generics_a);
+			ArrayDestroy(generics_a);
+
+			TrieIterNext(iter);
+		}
+		TrieIterDestroy(iter);
+	}
+	TrieDestroy(generics_t);
+
 	new Trie:models_t = Trie:oo_get(this, "models");
 	TrieDestroy(models_t);
 
 	new Trie:sprites_t = Trie:oo_get(this, "sprites");
 	TrieDestroy(sprites_t);
-
-	new Trie:generics_t = Trie:oo_get(this, "generics");
-	TrieDestroy(generics_t);
 }
 
 public bool:Assets@LoadJson(const filepath[])
@@ -182,22 +193,41 @@ public Assets@ParseJson(JSON:json)
 	new JSON:generics_j = json_object_get_value(json, "generics");
 	if (generics_j != Invalid_JSON)
 	{
-		new JSON:value_j = Invalid_JSON;
+		new Array:generics_a, JSON:value_j;
 		new Trie:generics_t = Trie:oo_get(this, "generics");
+
 		for (new i = json_object_get_count(generics_j) - 1; i >= 0; i--)
 		{
 			json_object_get_name(generics_j, i, key, charsmax(key));
 			value_j = json_object_get_value_at(generics_j, i);
-			json_get_string(value_j, value, charsmax(value));
-			json_free(value_j);
 
-			if (file_exists(value, true))
+			// already exist
+			if (TrieGetCell(generics_t, key, generics_a))
 			{
-				precache_generic(value);
-				TrieSetString(generics_t, key, value);
+				ArrayDestroy(generics_a);
+				TrieDeleteKey(generics_t, key);
 			}
+
+			generics_a = ArrayCreate(64);
+			for (new i = json_array_get_count(value_j) - 1; i >= 0; i--)
+			{
+				json_array_get_string(value_j, i, value, charsmax(value));
+				if (file_exists(value, true))
+				{
+					precache_generic(value);
+					ArrayPushString(generics_a, value);
+				}
+			}
+
+			if (ArraySize(generics_a) > 0)
+				TrieSetCell(generics_t, key, generics_a);
+			else
+				ArrayDestroy(generics_a);
+
+			json_free(value_j);
 		}
-		json_free(generics_j);
+
+		json_free(generics_j)
 	}
 }
 
@@ -206,9 +236,13 @@ public Assets@GetModel(const key[], model[], len)
 	return TrieGetString(Trie:oo_get(oo_this(), "models"), key, model, len);
 }
 
-public Assets@GetGeneric(const key[], model[], len)
+public Array:Assets@GetGeneric(const key[])
 {
-	return TrieGetString(Trie:oo_get(oo_this(), "generics"), key, model, len);
+	new Array:a;
+	if (TrieGetCell(Trie:oo_get(oo_this(), "generics"), key, _:a))
+		return a;
+
+	return Invalid_Array;
 }
 
 public Assets@GetSprite(const key[])
