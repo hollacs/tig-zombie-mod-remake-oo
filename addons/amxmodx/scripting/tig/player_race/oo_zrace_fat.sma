@@ -23,7 +23,6 @@ public plugin_init()
 	register_plugin("[OO] Zombie Race: Fat", "0.1", "holla");
 
 	new ZombieRaceMenu:menu_o = any:oo_call(0, "ZombieRaceMenu@GetInstance");
-
 	oo_call(menu_o, "AddRace", 
 		oo_new("PlayerRace", g_oClassInfo, "ZombieFat", "厚血, 移速慢"));
 
