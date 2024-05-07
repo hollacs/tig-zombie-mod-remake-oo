@@ -14,6 +14,9 @@ public plugin_init()
 
 public OnAddAccount(id, amount, RewardType:type, bool:change)
 {
+	if (type == RT_NONE)
+		return HC_CONTINUE;
+
 	new flags = read_flags(cvar_flags);
 	if (flags & (1 << _:type-1))
 		return HC_CONTINUE;
