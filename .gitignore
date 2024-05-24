@@ -11,6 +11,7 @@ logs/
 /addons/amxmodx/scripting/default/
 /addons/amxmodx/scripting/compiled/
 /addons/yapb/
+/addons/ebot/
 
 # all default files
 /ajawad.wad
