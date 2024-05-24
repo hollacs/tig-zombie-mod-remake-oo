@@ -22,3 +22,11 @@ stock bool:oo_playerclass_isa(id, const class_name[], bool:super=true)
 	
 	return oo_isa(class_o, class_name, super);
 }
+
+stock any:oo_playerclass_get_info(id)
+{
+	new PlayerClass:class_o = oo_playerclass_get(id);
+	if (class_o == @null) return @null;
+
+	return oo_call(class_o, "GetClassInfo");
+}
