@@ -15,7 +15,7 @@ public oo_init()
 public plugin_precache()
 {
 	g_oClassInfo = oo_new("ZombieClassInfo", "Fat Zombie");
-	oo_call(g_oClassInfo, "LoadJson", "zombie");
+	oo_call(g_oClassInfo, "LoadJson", "zombie.json");
 }
 
 public plugin_init()
@@ -24,7 +24,7 @@ public plugin_init()
 
 	new ZombieRaceMenu:menu_o = any:oo_call(0, "ZombieRaceMenu@GetInstance");
 	oo_call(menu_o, "AddRace", 
-		oo_new("PlayerRace", g_oClassInfo, "ZombieFat", "厚血, 移速慢"));
+		oo_new("PlayerRace", g_oClassInfo, "ZombieFat", "血量型"));
 
 	oo_call(g_oClassInfo, "CreateCvars");
 	oo_call(g_oClassInfo, "CreateCvar", "tig_zombie_fat", "health", "3000");

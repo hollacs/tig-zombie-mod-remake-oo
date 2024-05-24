@@ -36,7 +36,7 @@ public oo_init()
 public plugin_precache()
 {
 	g_oGrenadeInfo = oo_new("BioNadeInfo", "BioNade");
-	oo_call(g_oGrenadeInfo, "LoadJson", "bio");
+	oo_call(g_oGrenadeInfo, "LoadJson", "bio.json");
 
 	sprite_trail = AssetsGetSprite(g_oGrenadeInfo, "trail");
 	sprite_ring  = AssetsGetSprite(g_oGrenadeInfo, "ring");
@@ -132,6 +132,7 @@ public BioNade@Detonate()
 		}
 		else
 		{
+			set_entvar(victim, var_armorvalue, armor - damage);
 			oo_call(0, "PoisonStatus@Add", victim, attacker, 1.0, 1.0, 20);
 		}
 	}

@@ -1,8 +1,17 @@
 #include <amxmodx>
+#include <amxmisc>
 #include <reapi>
 #include <engine>
+#include <hamsandwich>
 #include <oo_player_class>
 #include <oo_player_status>
+#include <oo_assets>
+
+/*
+new const SOUND_FREEZE[] = "warcraft3/impalehit.wav";
+new const SOUND_BREAK[] = "warcraft3/impalelaunch1.wav"
+g_sprGlass = precache_model("models/glassgibs.mdl");
+*/
 
 #define UNIT_SECOND (1<<12)
 #define FFADE_IN 0x0000
@@ -16,20 +25,19 @@ enum _:Render_e
 	Float:RenderAmt
 };
 
-new g_sprGlass;
-new const SOUND_FREEZE[] = "warcraft3/impalehit.wav";
-new const SOUND_BREAK[] = "warcraft3/impalelaunch1.wav";
+new Assets:g_oAssets;
 
 public plugin_precache()
 {
-	g_sprGlass = precache_model("models/glassgibs.mdl");
-	precache_sound(SOUND_FREEZE);
-	precache_sound(SOUND_BREAK);
+	g_oAssets = oo_new("Assets");
+	oo_call(g_oAssets, "LoadJson", "playerstatus/frozen.json");
 }
 
 public plugin_init()
 {
 	register_plugin("[OO] Status: Frozen", "0.1", "holla");
+
+	RegisterHam(Ham_Player_Jump, "player", "OnPlayerJump");
 }
 
 public oo_init()
@@ -110,7 +118,9 @@ public FrozenStatus@Ctor(id, Float:freezetime)
 	ewrite_byte(100); // alpha
 	emessage_end();
 
-	emit_sound(id, CHAN_BODY, SOUND_FREEZE, 1.0, ATTN_NORM, 0, PITCH_NORM);
+	static sound[64];
+	if (AssetsGetRandomSound(g_oAssets, "freeze", sound, charsmax(sound)))
+		emit_sound(id, CHAN_BODY, sound, 1.0, ATTN_NORM, 0, PITCH_NORM);
 
 	oo_call(this, "SetRendering");
 }
@@ -121,30 +131,36 @@ public FrozenStatus@Dtor()
 	new id = oo_get(this, "player_id");
 	oo_call(this, "ResetRendering");
 
-	static Float:origin[3];
-	get_entvar(id, var_origin, origin);
-
-	message_begin_f(MSG_PVS, SVC_TEMPENTITY, origin);
-	write_byte(TE_BREAKMODEL); // TE id
-	write_coord_f(origin[0]); // x
-	write_coord_f(origin[1]); // y
-	write_coord_f(origin[2]+24); // z
-	write_coord(16); // size x
-	write_coord(16); // size y
-	write_coord(16); // size z
-	write_coord(random_num(-50, 50)); // velocity x
-	write_coord(random_num(-50, 50)); // velocity y
-	write_coord(25); // velocity z
-	write_byte(10); // random velocity
-	write_short(g_sprGlass); // model
-	write_byte(10); // count
-	write_byte(25); // life
-	write_byte(BREAK_GLASS); // flags
-	message_end();
-
 	rg_reset_maxspeed(id);
 
-	emit_sound(id, CHAN_BODY, SOUND_BREAK, 1.0, ATTN_NORM, 0, PITCH_NORM);
+	new modelindex = AssetsGetSprite(g_oAssets, "gibs");
+	if (modelindex)
+	{
+		static Float:origin[3];
+		get_entvar(id, var_origin, origin);
+
+		message_begin_f(MSG_PVS, SVC_TEMPENTITY, origin);
+		write_byte(TE_BREAKMODEL); // TE id
+		write_coord_f(origin[0]); // x
+		write_coord_f(origin[1]); // y
+		write_coord_f(origin[2]+24); // z
+		write_coord(16); // size x
+		write_coord(16); // size y
+		write_coord(16); // size z
+		write_coord(random_num(-50, 50)); // velocity x
+		write_coord(random_num(-50, 50)); // velocity y
+		write_coord(25); // velocity z
+		write_byte(10); // random velocity
+		write_short(modelindex); // model
+		write_byte(10); // count
+		write_byte(25); // life
+		write_byte(BREAK_GLASS); // flags
+		message_end();
+	}
+	
+	static sound[64];
+	if (AssetsGetRandomSound(g_oAssets, "break", sound, charsmax(sound)))
+		emit_sound(id, CHAN_BODY, sound, 1.0, ATTN_NORM, 0, PITCH_NORM);
 }
 
 public FrozenStatus@SetRendering()
@@ -186,6 +202,14 @@ public FrozenStatus@OnUpdate()
 	}
 
 	set_entvar(oo_get(this, "player_id"), var_maxspeed, 1.0);
+}
+
+public OnPlayerJump(id)
+{
+	if (is_user_alive(id) && oo_playerstatus_get(id, "FrozenStatus"))
+		return HAM_SUPERCEDE;
+
+	return HAM_IGNORED;
 }
 
 public OO_OnPlayerKilled(id)

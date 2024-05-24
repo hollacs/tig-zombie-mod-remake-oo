@@ -5,10 +5,13 @@
 #include <reapi>
 #include <oo_player_class>
 #include <oo_assets>
+#include <oo_nade_ice>
 
 new PlayerClassInfo:g_oClassInfo;
 
 new Float:cvar_rocket_speed, Float:cvar_rocket_radius, Float:cvar_rocket_mindmg, Float:cvar_rocket_maxdmg, Float:cvar_rocket_reload_time;
+new sprite_trail, sprite_fireball1, sprite_fireball2, sprite_gibs, sprite_smoke;
+new model_rocket[64];
 
 public oo_init()
 {
@@ -29,7 +32,7 @@ public oo_init()
 public plugin_precache()
 {
 	g_oClassInfo = oo_new("ZombieClassInfo", "Nemesis");
-	oo_call(g_oClassInfo, "LoadJson", "nemesis");
+	oo_call(g_oClassInfo, "LoadJson", "nemesis.json");
 }
 
 public plugin_init()
@@ -53,6 +56,12 @@ public plugin_init()
 	oo_call(g_oClassInfo, "CreateCvar", "tig_nemesis", "speed", "1.05");
 	oo_call(g_oClassInfo, "CreateCvar", "tig_nemesis", "dmg", "1.5");
 	oo_call(g_oClassInfo, "CreateCvar", "tig_nemesis", "armor_penetration", "0.25");
+
+	sprite_trail = AssetsGetSprite(g_oClassInfo, "trail");
+	sprite_fireball1 = AssetsGetSprite(g_oClassInfo, "fireball1");
+	sprite_fireball2 = AssetsGetSprite(g_oClassInfo, "fireball2");
+	sprite_gibs = AssetsGetSprite(g_oClassInfo, "gibs");
+	sprite_smoke = AssetsGetSprite(g_oClassInfo, "smoke");
 }
 
 public OnRocketThink(ent)
@@ -64,14 +73,13 @@ public OnRocketThink(ent)
 	{
 		entity_set_int(ent, EV_INT_bInDuck, 1);
 
-		new spr;
-		if ((spr = AssetsGetSprite(g_oClassInfo, "trail")))
+		if (sprite_trail)
 		{
 			// Make trail
 			message_begin(MSG_BROADCAST, SVC_TEMPENTITY);
 			write_byte(TE_BEAMFOLLOW);
 			write_short(ent); // entity
-			write_short(spr); // sprite
+			write_short(sprite_trail); // sprite
 			write_byte(10); // life
 			write_byte(5); // width
 			write_byte(100); // r
@@ -103,9 +111,17 @@ public OnRocketThink(ent)
 	entity_set_float(ent, EV_FL_nextthink, get_gametime() + 0.05);
 }
 
+public OO_OnIceNadeFrozen(victim, attacker, &Float:duration)
+{
+	if (oo_playerclass_isa(victim, "Nemesis") && !oo_playerclass_isa(attacker, "Leader"))
+		return PLUGIN_HANDLED;
+
+	return PLUGIN_CONTINUE;
+}
+
 public OnRocketTouch(ent, toucher)
 {
-	if (!is_valid_ent(ent))
+	if (!is_entity(ent))
 		return;
 
 	CreateExplosionEffect(ent);
@@ -124,7 +140,7 @@ public OnRocketTouch(ent, toucher)
 	
 	while ((victim = find_ent_in_sphere(victim, origin, cvar_rocket_radius)) != 0)
 	{
-		if (!is_valid_ent(victim))
+		if (!is_entity(victim))
 			continue;
 
 		if (entity_get_float(victim, EV_FL_takedamage) == DAMAGE_NO)
@@ -174,15 +190,14 @@ public Nemesis@OnCmdStart(uc, seed)
 	}
 }
 
-public Nemesis@RocketLaunch(id)
+public Nemesis@RocketLaunch()
 {
 	new this = oo_this();
 	new id = oo_get(this, "player_id");
 
-	new ent = create_entity("info_target");
+	new ent = rg_create_entity("info_target");
 
-	static model_rocket[64];
-	if (AssetsGetModel(g_oClassInfo, "rocket", model_rocket, charsmax(model_rocket)))
+	if (model_rocket[0])
 		entity_set_model(ent, model_rocket);
 
 	entity_set_size(ent, Float:{0.0, 0.0, 0.0}, Float:{0.0, 0.0, 0.0});
@@ -240,29 +255,28 @@ stock CreateExplosionEffect(ent)
 	new Float:origin[3];
 	get_entvar(ent, var_origin, origin);
 
-	new spr;
-	if ((spr = AssetsGetSprite(g_oClassInfo, "fireball1")))
+	if (sprite_fireball1)
 	{	
 		message_begin_f(MSG_PAS, SVC_TEMPENTITY, origin);
 		write_byte(TE_EXPLOSION);	// This makes a dynamic light and the explosion sprites/sound
 		write_coord_f(origin[0]);		// Send to PAS because of the sound
 		write_coord_f(origin[1]);
 		write_coord_f(origin[2] + 20.0);
-		write_short(spr);
+		write_short(sprite_fireball1);
 		write_byte(25);			// scale * 10
 		write_byte(30);		// framerate
 		write_byte(TE_EXPLFLAG_NOSOUND);	// flags
 		message_end();
 	}
 
-	if ((spr = AssetsGetSprite(g_oClassInfo, "fireball2")))
+	if (sprite_fireball2)
 	{	
 		message_begin_f(MSG_PAS, SVC_TEMPENTITY, origin);
 		write_byte(TE_EXPLOSION);	// This makes a dynamic light and the explosion sprites/sound
 		write_coord_f(origin[0] + random_float(-64.0, 64.0));	// Send to PAS because of the sound
 		write_coord_f(origin[1] + random_float(-64.0, 64.0));
 		write_coord_f(origin[2] + random_float(30.0, 35.0));
-		write_short(spr);
+		write_short(sprite_fireball2);
 		write_byte(30);			// scale * 10
 		write_byte(30);		// framerate
 		write_byte(TE_EXPLFLAG_NONE);	// flags
@@ -277,7 +291,7 @@ stock CreateExplosionEffect(ent)
 	write_byte(random_num(46, 48));
 	message_end();
 
-	if ((spr = AssetsGetSprite(g_oClassInfo, "gibs")))
+	if (sprite_gibs)
 	{
 		message_begin_f(MSG_PAS, SVC_TEMPENTITY, origin);
 		write_byte(TE_EXPLODEMODEL);
@@ -285,7 +299,7 @@ stock CreateExplosionEffect(ent)
 		write_coord_f(origin[1]);
 		write_coord_f(origin[2] + 10.0);
 		write_coord(random_num(400, 600));// velocity
-		write_short(spr); //(model index)
+		write_short(sprite_gibs); //(model index)
 		write_short(random_num(10, 15)); //(count)
 		write_byte(30); //(life in 0.1's)
 		message_end();
@@ -323,15 +337,14 @@ public ShowSmoke(param[], taskid)
 	origin[1] = param[1];
 	origin[2] = param[2] + 5;
 
-	new spr;
-	if ((spr = AssetsGetSprite(g_oClassInfo, "smoke")))
+	if (sprite_smoke)
 	{
 		message_begin(MSG_PVS, SVC_TEMPENTITY, origin);
 		write_byte(TE_SMOKE);
 		write_coord(origin[0]);
 		write_coord(origin[1]);
 		write_coord(origin[2]);
-		write_short(spr);
+		write_short(sprite_smoke);
 		write_byte(35 + random_num(0, 10)); // scale * 10
 		write_byte(5); // framerate
 		message_end();

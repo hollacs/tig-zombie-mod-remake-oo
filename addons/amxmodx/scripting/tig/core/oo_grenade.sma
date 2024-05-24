@@ -98,8 +98,7 @@ public GrenadeInfo@LoadJson(const filename[])
 	new this = oo_this();
 
 	static filepath[100];
-	get_configsdir(filepath, charsmax(filepath));
-	format(filepath, charsmax(filepath), "%s/grenade/%s.json", filepath, filename);
+	format(filepath, charsmax(filepath), "grenade/%s", filename);
 
 	return oo_call(this, "Assets@LoadJson", filepath);
 }

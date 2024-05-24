@@ -162,9 +162,8 @@ public PlayerClassInfo@CreateCvars() {}
 
 public PlayerClassInfo@LoadJson(const filename[])
 {
-	static filepath[100];
-	get_configsdir(filepath, charsmax(filepath));
-	format(filepath, charsmax(filepath), "%s/playerclass/%s.json", filepath, filename);
+	static filepath[64];
+	format(filepath, charsmax(filepath), "playerclass/%s", filename);
 
 	return oo_call(oo_this(), "Assets@LoadJson", filepath);
 }

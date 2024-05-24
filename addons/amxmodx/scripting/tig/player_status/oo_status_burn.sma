@@ -3,21 +3,27 @@
 #include <engine>
 #include <oo_player_class>
 #include <oo_player_status>
+#include <oo_assets>
 
-new const MODEL_FLAME[] = "sprites/fire.spr";
-new const SPRITE_SMOKE[] = "sprites/black_smoke3.spr";
+//new const MODEL_FLAME[] = "sprites/fire.spr";
+//new const SPRITE_SMOKE[] = "sprites/black_smoke3.spr";
 
-new g_sprSmoke;
+new Assets:g_oAssets;
+new sprite_smoke;
+new model_flame[64];
 
 public plugin_precache()
 {
-	precache_model(MODEL_FLAME);
-	g_sprSmoke = precache_model(SPRITE_SMOKE);
+	g_oAssets = oo_new("Assets");
+	oo_call(g_oAssets, "LoadJson", "playerstatus/burn.json");
 }
 
 public plugin_init()
 {
 	register_plugin("[OO] Status: Burn", "0.1", "holla");
+
+	sprite_smoke = AssetsGetSprite(g_oAssets, "smoke");
+	AssetsGetModel(g_oAssets, "flame", model_flame, charsmax(model_flame));
 }
 
 public oo_init()
@@ -78,13 +84,13 @@ public BurnStatus@OnUpdate()
 	new this = oo_this();
 	new id = oo_get(this, "player_id");
 
+	oo_call(this, "SustainedDamage@OnUpdate");
+
 	if (get_entvar(id, var_flags) & FL_INWATER)
 	{
-		oo_call(this, "Delete");
+		oo_set(this, "killme", true);
 		return;
-	}
-
-	oo_call(this, "SustainedDamage@OnUpdate");
+	}	
 }
 
 public BurnStatus@CreateFlame()
@@ -99,7 +105,8 @@ public BurnStatus@CreateFlame()
 	set_entvar(ent, var_movetype, MOVETYPE_FOLLOW);
 	set_entvar(ent, var_classname, "flame_sprite");
 
-	entity_set_model(ent, MODEL_FLAME);
+	if (model_flame[0])
+		entity_set_model(ent, model_flame);
 
 	set_entvar(ent, var_scale, 0.5);
 	set_entvar(ent, var_framerate, 10.0);
@@ -123,15 +130,18 @@ public BurnStatus@RemoveFlame()
 	new Float:origin[3];
 	get_entvar(id, var_origin, origin);
 
-	message_begin_f(MSG_PVS, SVC_TEMPENTITY, origin);
-	write_byte(TE_SMOKE); // TE id
-	write_coord_f(origin[0]); // x
-	write_coord_f(origin[1]); // y
-	write_coord_f(origin[2]-50.0); // z
-	write_short(g_sprSmoke); // sprite
-	write_byte(random_num(15, 20)); // scale
-	write_byte(random_num(10, 20)); // framerate
-	message_end();
+	if (sprite_smoke)
+	{
+		message_begin_f(MSG_PVS, SVC_TEMPENTITY, origin);
+		write_byte(TE_SMOKE); // TE id
+		write_coord_f(origin[0]); // x
+		write_coord_f(origin[1]); // y
+		write_coord_f(origin[2]-50.0); // z
+		write_short(sprite_smoke); // sprite
+		write_byte(random_num(15, 20)); // scale
+		write_byte(random_num(10, 20)); // framerate
+		message_end();
+	}
 }
 
 public BurnStatus@Damage()

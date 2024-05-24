@@ -7,7 +7,7 @@ new PlayerClassInfo:g_oClassInfo;
 public plugin_precache()
 {
 	g_oClassInfo = oo_new("HumanClassInfo", "Human");
-	oo_call(g_oClassInfo, "LoadJson", "human");
+	oo_call(g_oClassInfo, "LoadJson", "human.json");
 }
 
 public plugin_init()

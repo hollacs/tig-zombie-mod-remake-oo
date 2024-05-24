@@ -15,7 +15,7 @@ public oo_init()
 public plugin_precache()
 {
 	g_oClassInfo = oo_new("ZombieClassInfo", "Boss");
-	oo_call(g_oClassInfo, "LoadJson", "boss");
+	oo_call(g_oClassInfo, "LoadJson", "boss.json");
 }
 
 public plugin_init()

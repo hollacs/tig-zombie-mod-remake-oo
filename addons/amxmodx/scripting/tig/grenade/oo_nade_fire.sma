@@ -41,7 +41,7 @@ public oo_init()
 public plugin_precache()
 {
 	g_oGrenadeInfo = oo_new("FireNadeInfo", "FireNade");
-	oo_call(g_oGrenadeInfo, "LoadJson", "fire");
+	oo_call(g_oGrenadeInfo, "LoadJson", "fire.json");
 
 	sprite_trail = AssetsGetSprite(g_oGrenadeInfo, "trail");
 	sprite_ring  = AssetsGetSprite(g_oGrenadeInfo, "ring");
