@@ -21,12 +21,12 @@ new const g_ObjectiveEnts[][] = {
 	"func_escapezone"
 };
 
-new Float:CvarRatio;
-new Float:CvarWait;
-new CvarLights[32];
-new CvarMoneyDamage, Float:CvarMoneyHumanDamagedHp;
-new CvarMoneyZombieKilled, CvarMoneyHumanKilled;
-new CvarMoneyHumanWin, CvarMoneyZombieWin;
+new Float:cvar_ratio;
+new Float:cvar_wait;
+new cvar_lights[32];
+new cvar_money_damage, Float:cvar_money_human_damaged_hp;
+new cvar_money_zombie_killed, cvar_money_human_killed;
+new cvar_money_human_win, cvar_money_zombie_win;
 
 new Assets:g_oAssets;
 new g_fwEntSpawn;
@@ -68,12 +68,8 @@ public plugin_precache()
 {
 	oo_gamemode_set(oo_new("ZombieMode"));
 
-	static file_path[64];
-	get_configsdir(file_path, charsmax(file_path));
-	format(file_path, charsmax(file_path), "%s/gamemode/zombie.json", file_path);
-
 	g_oAssets = oo_new("Assets");
-	oo_call(g_oAssets, "LoadJson", file_path);
+	oo_call(g_oAssets, "LoadJson", "gamemode/zombie.json");
 
 	g_fwEntSpawn = register_forward(FM_Spawn, "OnEntSpawn");
 }
@@ -87,32 +83,32 @@ public plugin_init()
 	unregister_forward(FM_Spawn, g_fwEntSpawn);
 
 	new pcvar = create_cvar("tig_gamemode_start_delay", "20");
-	bind_pcvar_float(pcvar, CvarWait);
+	bind_pcvar_float(pcvar, cvar_wait);
 
 	pcvar = create_cvar("tig_gamemode_zombie_ratio", "0.1");
-	bind_pcvar_float(pcvar, CvarRatio);
+	bind_pcvar_float(pcvar, cvar_ratio);
 
 	pcvar = create_cvar("tig_gamemode_lights", "c");
-	bind_pcvar_string(pcvar, CvarLights, charsmax(CvarLights));
-	hook_cvar_change(pcvar, "OnCvarLights");
+	bind_pcvar_string(pcvar, cvar_lights, charsmax(cvar_lights));
+	hook_cvar_change(pcvar, "Oncvar_lights");
 
 	pcvar = create_cvar("tig_money_damage", "10");
-	bind_pcvar_num(pcvar, CvarMoneyDamage);
+	bind_pcvar_num(pcvar, cvar_money_damage);
 
 	pcvar = create_cvar("tig_money_human_damaged_hp", "400");
-	bind_pcvar_float(pcvar, CvarMoneyHumanDamagedHp);
+	bind_pcvar_float(pcvar, cvar_money_human_damaged_hp);
 
 	pcvar = create_cvar("tig_money_human_killed", "20");
-	bind_pcvar_num(pcvar, CvarMoneyHumanKilled);
+	bind_pcvar_num(pcvar, cvar_money_human_killed);
 
 	pcvar = create_cvar("tig_money_zombie_killed", "10");
-	bind_pcvar_num(pcvar, CvarMoneyZombieKilled);
+	bind_pcvar_num(pcvar, cvar_money_zombie_killed);
 
 	pcvar = create_cvar("tig_money_human_win", "20");
-	bind_pcvar_num(pcvar, CvarMoneyHumanWin);
+	bind_pcvar_num(pcvar, cvar_money_human_win);
 
 	pcvar = create_cvar("tig_money_zombie_win", "20");
-	bind_pcvar_num(pcvar, CvarMoneyZombieWin);
+	bind_pcvar_num(pcvar, cvar_money_zombie_win);
 
 	set_member_game(m_bTCantBuy, true);
 	set_member_game(m_bCTCantBuy, true);
@@ -176,7 +172,7 @@ public Message_SendAudio(msgid, msgdest, id)
 	return PLUGIN_CONTINUE;
 }
 
-public OnCvarLights(pcvar, const old_value[], const new_value[])
+public Oncvar_lights(pcvar, const old_value[], const new_value[])
 {
 	new GameMode:mode_o = oo_gamemode_get();
 	if (mode_o == @null || !oo_isa(mode_o, "ZombieMode", true))
@@ -218,7 +214,7 @@ public ZombieMode@OnThink()
 				set_dhudmessage(0, 255, 0, -1.0, 0.2, 0, 0.0, 3.0, 1.0, 1.0);
 				show_dhudmessage(0, "病毒在空氣中飄散...");
 				oo_set(this, "has_intro", true);
-				oo_set(this, "countdown_time", current_time + floatmax(CvarWait - 10.0, 0.0));
+				oo_set(this, "countdown_time", current_time + floatmax(cvar_wait - 10.0, 0.0));
 			}
 			else
 			{
@@ -226,13 +222,13 @@ public ZombieMode@OnThink()
 				if (current_time >= countdown_time)
 				{
 					new Float:roundstart_time = Float:get_member_game(m_fRoundStartTime);
-					if (current_time - roundstart_time >= CvarWait)
+					if (current_time - roundstart_time >= cvar_wait)
 					{
 						oo_call(this, "Start"); // start gamemode
 						return;
 					}
 
-					new countdown = floatround(roundstart_time + CvarWait - current_time, floatround_ceil);
+					new countdown = floatround(roundstart_time + cvar_wait - current_time, floatround_ceil);
 					set_dhudmessage(0, 255, 0, -1.0, 0.2, 0, 0.0, 1.0, 0.0, 0.0);
 					show_dhudmessage(0, "遊戲將在 %d 秒後開始", countdown);
 
@@ -267,7 +263,7 @@ public ZombieMode@Start()
 		players[num++] = i;
 	}
 	
-	new max_zombies = floatround(num * CvarRatio, floatround_ceil);
+	new max_zombies = floatround(num * cvar_ratio, floatround_ceil);
 	new player, rand;
 
 	for (new i = 0; i < max_zombies; i++)
@@ -281,7 +277,7 @@ public ZombieMode@Start()
 			rg_give_item(player, "weapon_hegrenade");
 	}
 
-	set_lights(CvarLights);
+	set_lights(cvar_lights);
 
 	set_dhudmessage(0, 255, 0, -1.0, 0.2, 1, 0.0, 3.0, 0.0, 1.0);
 	show_dhudmessage(0, "遊戲開始!");
@@ -306,7 +302,7 @@ public ZombieMode@OnRoundEnd(WinStatus:win, ScenarioEventEndRound:event, Float:t
 					(TEAM_TERRORIST <= TeamName:get_member(i, m_iTeam) <= TEAM_CT) &&
 					oo_playerclass_isa(i, "Zombie"))
 				{
-					rg_add_account(i, CvarMoneyZombieWin);
+					rg_add_account(i, cvar_money_zombie_win);
 				}
 			}
 		}
@@ -318,7 +314,7 @@ public ZombieMode@OnRoundEnd(WinStatus:win, ScenarioEventEndRound:event, Float:t
 					(TEAM_TERRORIST <= TeamName:get_member(i, m_iTeam) <= TEAM_CT) &&
 					oo_playerclass_isa(i, "Human"))
 				{
-					rg_add_account(i, CvarMoneyHumanWin);
+					rg_add_account(i, cvar_money_human_win);
 				}
 			}
 		}
@@ -404,7 +400,7 @@ public ZombieMode@OnRoundTimeExpired()
 
 	if (human_count > 0 && zombie_count > 0 && spawnable_count > 0)
 	{
-		oo_call(oo_this(), "RoundEnd", WINSTATUS_CTS, ROUND_CTS_WIN, "Survivors Win");
+		rg_round_end(5.0, WINSTATUS_CTS, ROUND_CTS_WIN, "Humans Win");
 
 		set_dhudmessage(0, 255, 0, -1.0, 0.3, 0, 0.0, 3.0, 1.0, 1.0);
 		show_dhudmessage(0, "Humans Win");
@@ -438,11 +434,11 @@ public ZombieMode@OnPlayerKilled(id, attacker, shouldgib)
 	{
 		if (oo_playerclass_isa(id, "Zombie"))
 		{
-			rg_add_account(attacker, CvarMoneyZombieKilled);
+			rg_add_account(attacker, cvar_money_zombie_killed);
 		}
 		else
 		{
-			rg_add_account(attacker, CvarMoneyHumanKilled);
+			rg_add_account(attacker, cvar_money_human_killed);
 		}
 	}
 }
@@ -469,9 +465,9 @@ public ZombieMode@OnPlayerTakeDamage(victim, inflictor, attacker, Float:damage, 
 		{
 			g_DamageDealt[attacker] += damage;
 
-			if (g_DamageDealt[attacker] >= CvarMoneyHumanDamagedHp)
+			if (g_DamageDealt[attacker] >= cvar_money_human_damaged_hp)
 			{
-				rg_add_account(attacker, CvarMoneyDamage);
+				rg_add_account(attacker, cvar_money_damage);
 				g_DamageDealt[attacker] = 0.0;
 			}
 		}
