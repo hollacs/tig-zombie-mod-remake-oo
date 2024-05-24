@@ -12,6 +12,7 @@ new GrenadeInfo:g_oGrenadeInfo;
 new sprite_trail, sprite_ring, sprite_gibs;
 
 new Float:cvar_radius, Float:cvar_duration_min, Float:cvar_duration_max, cvar_traceline, Float:cvar_chill_duration, Float:cvar_chill_speed;
+new g_fwFrozen, g_fwRet;
 
 public oo_init()
 {
@@ -29,14 +30,14 @@ public oo_init()
 		oo_mthd(cl, "DetonateEffect");
 		oo_mthd(cl, "GetInfo");
 		oo_mthd(cl, "SetWorldModel");
-		oo_mthd(cl, "Frozen", @int(player), @fl(duration));
+		oo_mthd(cl, "Frozen", @int(player), @int(attacker), @fl(duration));
 	}
 }
 
 public plugin_precache()
 {
 	g_oGrenadeInfo = oo_new("IceNadeInfo", "IceNade");
-	oo_call(g_oGrenadeInfo, "LoadJson", "ice");
+	oo_call(g_oGrenadeInfo, "LoadJson", "ice.json");
 
 	sprite_trail = AssetsGetSprite(g_oGrenadeInfo, "trail");
 	sprite_ring  = AssetsGetSprite(g_oGrenadeInfo, "ring");
@@ -46,6 +47,8 @@ public plugin_precache()
 public plugin_init()
 {
 	register_plugin("[OO] Nade: Ice", "0.1", "holla");
+
+	g_fwFrozen = CreateMultiForward("OO_OnIceNadeFrozen", ET_CONTINUE, FP_CELL, FP_CELL, FP_VAL_BYREF);
 
 	new pcvar = create_cvar("icenade_radius", "240");
 	bind_pcvar_float(pcvar, cvar_radius);
@@ -116,6 +119,7 @@ public IceNade@Detonate()
 	new Float:origin[3];
 	get_entvar(ent, var_origin, origin);
 
+	new attacker = get_entvar(ent, var_owner);
 	new victim = -1;
 	new Float:duration;
 
@@ -128,15 +132,19 @@ public IceNade@Detonate()
 			continue;
 
 		duration = floatmax((1.0 - entity_range(victim, ent) / cvar_radius) * cvar_duration_max, cvar_duration_min);
-		oo_call(this, "Frozen", victim, duration);
+		oo_call(this, "Frozen", victim, attacker, duration);
 	}
 
 	oo_call(this, "Grenade@Detonate");
 	return true;
 }
 
-public IceNade@Frozen(victim, Float:duration)
+public IceNade@Frozen(victim, attacker, Float:duration)
 {
+	ExecuteForward(g_fwFrozen, g_fwRet, victim, attacker, duration);
+	if (g_fwRet == PLUGIN_HANDLED)
+		return;
+	
 	oo_call(0, "FrozenStatus@Add", victim, duration)
 }
 
