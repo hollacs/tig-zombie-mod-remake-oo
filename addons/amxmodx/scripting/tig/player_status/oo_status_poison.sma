@@ -4,10 +4,19 @@
 #include <oo_player_class>
 #include <oo_player_status>
 #include <oo_zombie_mode>
+#include <oo_assets>
 
 public plugin_init()
 {
 	register_plugin("[OO] Status: Poison", "0.1", "holla");
+
+	register_clcmd("hahajai", "Cmd");
+}
+
+public Cmd(id)
+{
+	oo_call(0, "PoisonStatus@Add", id, id, 1.0, 1.0, 10);
+	return PLUGIN_HANDLED;
 }
 
 public oo_init()
@@ -15,6 +24,8 @@ public oo_init()
 	oo_class("PoisonStatus", "SustainedDamage", "PlayerStatus");
 	{
 		new cl[] = "PoisonStatus";
+		oo_var(cl, "next_cough_time", 1);
+
 		oo_ctor(cl, "Ctor", @int(player), @int(attacker), @fl(interval), @fl(damage), @int(times));
 
 		oo_mthd(cl, "Death");
@@ -47,11 +58,28 @@ public PoisonStatus@Ctor(player, attacker, Float:interval, Float:damage, times)
 {
 	oo_super_ctor("PlayerStatus", player);
 	oo_super_ctor("SustainedDamage", player, attacker, interval, damage, times);
+	oo_set(oo_this(), "next_cough_time", get_gametime() + 4.0);
 }
 
 public PoisonStatus@OnUpdate()
 {
 	new this = oo_this();
+
+	new Float:gametime = get_gametime();
+	if (gametime >= Float:oo_get(this, "next_cough_time"))
+	{
+		new player = oo_get(this, "player_id");
+		new PlayerClassInfo:info_o = oo_playerclass_get_info(player);
+		if (info_o != @null)
+		{
+			static sound[64];
+			if (AssetsGetRandomSound(info_o, "cough", sound, charsmax(sound)))
+				emit_sound(player, CHAN_VOICE, sound, VOL_NORM, ATTN_NORM, 0, PITCH_NORM);
+		}
+
+		oo_set(this, "next_cough_time", gametime + random_float(4.0, 6.0));
+	}
+
 	oo_call(this, "SustainedDamage@OnUpdate");
 }
 
