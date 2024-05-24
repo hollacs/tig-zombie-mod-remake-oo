@@ -1,0 +1,8 @@
+{
+    "sprites" : {
+        "smoke": "sprites/black_smoke3.spr"
+    },
+    "models": {
+        "flame" : "sprites/fire.spr"
+    }
+}

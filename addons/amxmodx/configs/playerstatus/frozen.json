@@ -1,0 +1,9 @@
+{
+    "sprites" : {
+        "gibs": "models/glassgibs.mdl"
+    },
+    "sounds": {
+        "freeze" : ["warcraft3/impalehit.wav"],
+        "break" : ["warcraft3/impalelaunch1.wav"]
+    }
+}
