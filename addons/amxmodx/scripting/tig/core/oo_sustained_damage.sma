@@ -19,6 +19,7 @@ public oo_init()
 		oo_var(cl, "damage", 1); // float
 		oo_var(cl, "count", 1); // int
 		oo_var(cl, "next_hurt_time", 1); // float
+		oo_var(cl, "killme", 1);
 
 		oo_ctor(cl, "Ctor", @int(player), @int(attacker), @fl(interval), @fl(damage), @int(times));
 		oo_dtor(cl, "Dtor");
@@ -39,6 +40,7 @@ public SustainedDamage@Ctor(player, attacker, Float:interval, Float:damage, time
 	oo_set(this, "damage", damage);
 	oo_set(this, "count", times);
 	oo_set(this, "next_hurt_time", get_gametime() + interval);
+	oo_set(this, "killme", false);
 }
 
 public SustainedDamage@Dtor() {}
@@ -46,6 +48,11 @@ public SustainedDamage@Dtor() {}
 public SustainedDamage@OnUpdate()
 {
 	new this = oo_this();
+	if (oo_get(this, "killme"))
+	{
+		oo_call(this, "Delete");
+		return;
+	}
 
 	new Float:current_time = get_gametime();
 	if (current_time >= Float:oo_get(this, "next_hurt_time"))
@@ -53,7 +60,7 @@ public SustainedDamage@OnUpdate()
 		new count = oo_get(this, "count");
 		if (count <= 0)
 		{
-			oo_call(this, "Delete");
+			oo_set(this, "killme", true);
 			return;
 		}
 
@@ -90,7 +97,7 @@ public SustainedDamage@Death()
 	new id = oo_get(this, "player_id");
 	new attacker = oo_get(this, "attacker");
 
-	oo_call(this, "Delete");
+	oo_set(this, "killme", true);
 	ExecuteHamB(Ham_Killed, id, attacker, 0);
 }
 
