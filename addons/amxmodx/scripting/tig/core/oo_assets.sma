@@ -81,16 +81,21 @@ public Assets@Dtor()
 public bool:Assets@LoadJson(const filepath[])
 {
 	new this = oo_this();
-	if (!file_exists(filepath))
+
+	static fullpath[100];
+	get_configsdir(fullpath, charsmax(fullpath));
+	formatex(fullpath, charsmax(fullpath), "%s/%s", fullpath, filepath);
+
+	if (!file_exists(fullpath))
 	{
-		server_print("Assets@LoadJson: file (%s) does not exist.", filepath);
+		server_print("Assets@LoadJson: file (%s) does not exist.", fullpath);
 		return false;
 	}
 
-	new JSON:json = json_parse(filepath, true, true);
+	new JSON:json = json_parse(fullpath, true, true);
 	if (json == Invalid_JSON)
 	{
-		server_print("Assets@LoadJson: invalid json (%s).", filepath);
+		server_print("Assets@LoadJson: invalid json (%s).", fullpath);
 		return false;
 	}
 
