@@ -6,7 +6,6 @@ folder = os.getcwd()
 output_file = "compile"
 
 with shelve.open(output_file) as my_dict:
-
     for root, dirs, files in os.walk(folder):
         for file in files:
             if file.endswith(".sma"):
