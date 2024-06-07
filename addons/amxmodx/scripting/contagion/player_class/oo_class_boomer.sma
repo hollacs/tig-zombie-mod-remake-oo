@@ -306,7 +306,7 @@ public OnRestartRound()
 
 public ctg_OnGetPlayerSpawnSpot(id)
 {
-	if (!oo_player_class(id, "Zombie"))
+	if (!oo_playerclass_isa(id, "Zombie"))
 		return;
 		
 	new spawn_ent[3], spawn_ent_num = 0;
