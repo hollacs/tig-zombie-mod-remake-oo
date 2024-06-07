@@ -1,9 +1,7 @@
 #include <amxmodx>
 #include <oo_player>
 
-#define MAX_PLAYERSTATUS 5
-
-new PlayerStatus:g_oPlayerStatus[MAX_PLAYERS + 1][MAX_PLAYERSTATUS];
+new Array:g_aPlayerStatus[MAX_PLAYERS + 1];
 new g_PlayerStatusNum[MAX_PLAYERS + 1];
 
 public plugin_init()
@@ -41,6 +39,7 @@ public PlayerStatus@Delete()
 {
 	new this = oo_this();
 	new id = oo_get(this, "player_id");
+
 	DeletePlayerStatus(id, PlayerStatus:this);
 }
 
@@ -72,7 +71,7 @@ public native_add()
 		return -1;
 	}
 
-	return AddPlayerStatus(id, status_o);
+	return AddPlayerStatus(id, status_o, bool:get_param(3));
 }
 
 // oo_playerstatus_remove(id, "FrozenStatus", true)
@@ -138,42 +137,51 @@ public PlayerStatus:native_get()
 	if (index == -1)
 		return @null;
 
-	return g_oPlayerStatus[id][index];
+	return PlayerStatus:ArrayGetCell(g_aPlayerStatus[id], index);
+}
+
+public OO_OnPlayerCtor(id)
+{
+	g_aPlayerStatus[id] = ArrayCreate(1);
+	g_PlayerStatusNum[id] = 0;
 }
 
 public OO_OnPlayerDtor(id)
 {
-	for (new i = 0; i < MAX_PLAYERSTATUS; i++)
+	while (g_PlayerStatusNum[id] > 0)
 	{
-		if (g_oPlayerStatus[id][i] != @null)
-			oo_delete(g_oPlayerStatus[id][i]);
-		
-		g_oPlayerStatus[id][i] = @null;
+		oo_delete(PlayerStatus:ArrayGetCell(g_aPlayerStatus[id], 0));
+		ArrayDeleteItem(g_aPlayerStatus[id], 0);
+		g_PlayerStatusNum[id]--;
 	}
 
-	g_PlayerStatusNum[id] = 0;
+	ArrayDestroy(g_aPlayerStatus[id]);
 }
 
 public OO_OnPlayerPreThink(id)
 {
+	new PlayerStatus:status_o;
 	for (new i = 0; i < g_PlayerStatusNum[id]; i++)
 	{
-		oo_call(g_oPlayerStatus[id][i], "OnUpdate");
+		status_o = any:ArrayGetCell(g_aPlayerStatus[id], i);
+		oo_call(status_o, "OnUpdate");
 	}
 }
 
-AddPlayerStatus(id, PlayerStatus:status_o)
+AddPlayerStatus(id, PlayerStatus:status_o, bool:replace=false)
 {
-	if (g_PlayerStatusNum[id] >= MAX_PLAYERSTATUS)
-		return -1;
-
 	static class_name[32];
 	oo_get_classname(status_o, class_name, charsmax(class_name));
 
 	new index = GetPlayerStatusIndex(id, class_name);
 	if (index != -1)
 	{
-		oo_delete(g_oPlayerStatus[id][index]);
+		if (!replace)
+			return -1;
+			
+		new PlayerStatus:obj = any:ArrayGetCell(g_aPlayerStatus[id], index);
+		ArrayDeleteItem(g_aPlayerStatus[id], index);
+		oo_delete(obj);
 	}
 	else
 	{
@@ -181,7 +189,7 @@ AddPlayerStatus(id, PlayerStatus:status_o)
 		g_PlayerStatusNum[id]++;
 	}
 
-	g_oPlayerStatus[id][index] = status_o;
+	ArrayPushCell(g_aPlayerStatus[id], _:status_o);
 	return index;
 }
 
@@ -191,9 +199,9 @@ PlayerStatus:RemovePlayerStatus(id, const class_name[], bool:delete=true)
 	if (index == -1)
 		return @null;
 	
-	new PlayerStatus:status_o = g_oPlayerStatus[id][index];
-	g_oPlayerStatus[id][index] = g_oPlayerStatus[id][--g_PlayerStatusNum[id]];
-	g_oPlayerStatus[id][g_PlayerStatusNum[id]] = @null;
+	new PlayerStatus:status_o = any:ArrayGetCell(g_aPlayerStatus[id], index);
+	ArrayDeleteItem(g_aPlayerStatus[id], index);
+	g_PlayerStatusNum[id]--;
 
 	if (delete && oo_object_exists(status_o))
 	{
@@ -206,13 +214,14 @@ PlayerStatus:RemovePlayerStatus(id, const class_name[], bool:delete=true)
 
 DeletePlayerStatus(id, PlayerStatus:status_o)
 {
+	new PlayerStatus:obj;
 	for (new i = 0; i < g_PlayerStatusNum[id]; i++)
 	{
-		if (g_oPlayerStatus[id][i] == status_o)
+		obj = PlayerStatus:ArrayGetCell(g_aPlayerStatus[id], i);
+		if (obj == status_o)
 		{
-			g_oPlayerStatus[id][i] = g_oPlayerStatus[id][--g_PlayerStatusNum[id]];
-			g_oPlayerStatus[id][g_PlayerStatusNum[id]] = @null;
-
+			ArrayDeleteItem(g_aPlayerStatus[id], i);
+			g_PlayerStatusNum[id]--;
 			oo_delete(status_o);
 			return 1;
 		}
@@ -223,9 +232,11 @@ DeletePlayerStatus(id, PlayerStatus:status_o)
 
 GetPlayerStatusIndex(id, const class_name[])
 {
+	new PlayerStatus:status_o;
 	for (new i = 0; i < g_PlayerStatusNum[id]; i++)
 	{
-		if (oo_isa(g_oPlayerStatus[id][i], class_name, false))
+		status_o = any:ArrayGetCell(g_aPlayerStatus[id], i);
+		if (oo_isa(status_o, class_name, false))
 			return i;
 	}
 
@@ -234,10 +245,12 @@ GetPlayerStatusIndex(id, const class_name[])
 
 GetPlayerStatusStr(id, output[], maxlen)
 {
+	new PlayerStatus:status_o;
 	new len = 0;
 	for (new i = 0; i < g_PlayerStatusNum[id]; i++)
 	{
+		status_o = any:ArrayGetCell(g_aPlayerStatus[id], i);
 		if (i > 0) output[len++] = '+';
-		len += oo_call(g_oPlayerStatus[id][i], "GetName", output[len], maxlen-len);
+		len += oo_call(status_o, "GetName", output[len], maxlen-len);
 	}
 }
