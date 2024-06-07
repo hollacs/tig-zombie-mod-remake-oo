@@ -6,7 +6,6 @@
 #include <xs>
 
 new Float:g_Velocity[MAX_PLAYERS + 1][3];
-new Float:g_Multiplier[MAX_PLAYERS + 1] = {1.0, ...};
 
 new g_Ret;
 new g_fwKnockBack, g_fwKnockBackPost;
@@ -37,7 +36,7 @@ public plugin_init()
 	pcvar = create_cvar("cs_knockback_distance", "500");
 	bind_pcvar_float(pcvar, cvar_distance);
 
-	new cvar_name[32];
+	static cvar_name[32];
 	for (new i = CSW_P228; i <= CSW_P90; i++)
 	{
 		if (~CSW_ALL_GUNS & (1 << i))
@@ -54,50 +53,13 @@ public plugin_init()
 	g_fwKnockBackPost = CreateMultiForward("CS_OnKnockBack_Post", ET_IGNORE, FP_CELL, FP_CELL, FP_FLOAT, FP_CELL, FP_ARRAY);
 }
 
-public plugin_natives()
-{
-	register_library("cs_knockback");
-
-	register_native("cs_knockback_get", "native_get");
-	register_native("cs_knockback_set", "native_set");
-}
-
-public Float:native_get()
-{
-	new id = get_param(1)
-	if (!is_user_connected(id))
-	{
-		log_error(AMX_ERR_NATIVE, "Player (%d) not connected", id);
-		return 1.0;
-	}
-
-	return g_Multiplier[id];
-}
-
-public native_set()
-{
-	new id = get_param(1)
-	if (!is_user_connected(id))
-	{
-		log_error(AMX_ERR_NATIVE, "Player (%d) not connected", id);
-		return;
-	}
-
-	g_Multiplier[id] = get_param_f(2);
-}
-
 public plugin_cfg()
 {
-	new path[64];
+	static path[64];
 	get_configsdir(path, charsmax(path));
 
 	server_cmd("exec ^"%s/cs_knockback.cfg^"", path);
 	server_exec();
-}
-
-public client_putinserver(id)
-{
-	g_Multiplier[id] = cvar_multiplier;
 }
 
 public OnTakeDamage(id)
@@ -130,7 +92,7 @@ public OnTraceAttack_Post(id, attacker, Float:damage, Float:dir[3], tr, damagebi
 	if (~CSW_ALL_GUNS & (1 << weapon))
 		return;
 
-	new Float:start_pos[3], Float:end_pos[3];
+	static Float:start_pos[3], Float:end_pos[3];
 	ExecuteHam(Ham_EyePosition, attacker, start_pos);
 	get_tr2(tr, TR_vecEndPos, end_pos);
 
@@ -138,12 +100,13 @@ public OnTraceAttack_Post(id, attacker, Float:damage, Float:dir[3], tr, damagebi
 		return;
 
 	ExecuteForward(g_fwKnockBack, g_Ret, id, attacker, Float:damage, tr);
+	if (g_Ret == PLUGIN_HANDLED)
+		return;
 
-	new Float:velocity[3];
+	static Float:velocity[3];
 	get_entvar(id, var_velocity, velocity);
 
 	xs_vec_mul_scalar(dir, cvar_power[weapon], dir);
-	xs_vec_mul_scalar(dir, g_Multiplier[id], dir);
 
 	new arr = PrepareArray(_:dir, sizeof dir, 1);
 	ExecuteForward(g_fwKnockBackPost, g_Ret, id, attacker, Float:damage, tr, arr);
