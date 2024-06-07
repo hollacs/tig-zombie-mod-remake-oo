@@ -2,6 +2,10 @@
 	"generics" : {
 		"game_start" : ["sound/tig_test/resident_evil.wav"],
 		"zombies_win" : ["sound/tig_test/zombies_win1.wav", "sound/tig_test/zombies_win2.wav", "sound/tig_test/zombies_win3.wav"],
-        "survivors_win" : ["sound/tig_test/survivors_win.wav"]
+        "survivors_win" : ["sound/tig_test/survivors_win.wav"],
+		"klaxon": ["sound/tig_test/klaxon1.wav"],
+		"boss_detected": ["sound/tig_test/boss_detected.wav"],
+		"boss_death": ["sound/tig_test/boss_death.wav"],
+		"nemesis_bgm": ["sound/tig_test/nemesis_bgm.mp3"]
 	}
 } 
