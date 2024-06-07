@@ -43,6 +43,8 @@ public plugin_init()
 	register_think("rpg_rocket", "OnRocketThink");
 	register_touch("rpg_rocket", "*", "OnRocketTouch");
 
+	RegisterHookChain(RG_CSGameRules_RestartRound, "OnRestartRound");
+
 	bind_pcvar_float(create_cvar("ctg_nemesis_rocket_speed", "1250"), cvar_rocket_speed);
 	bind_pcvar_float(create_cvar("ctg_nemesis_rocket_radius", "250"), cvar_rocket_radius);
 	bind_pcvar_float(create_cvar("ctg_nemesis_rocket_min_dmg", "1"), cvar_rocket_mindmg);
@@ -65,6 +67,11 @@ public plugin_init()
 	sprite_fireball2 = AssetsGetSprite(g_oClassInfo, "fireball2");
 	sprite_gibs = AssetsGetSprite(g_oClassInfo, "gibs");
 	sprite_smoke = AssetsGetSprite(g_oClassInfo, "smoke");
+}
+
+public OnRestartRound()
+{
+	remove_entity_name("rpg_rocket");
 }
 
 public OnRocketThink(ent)
