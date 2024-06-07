@@ -44,6 +44,8 @@ public plugin_init()
 	register_touch("spit_ent", "*", "OnSpitEntTouch");
 	register_think("poison_spr", "OnPoisonSpr");
 
+	RegisterHookChain(RG_CSGameRules_RestartRound, "OnRestartRound");
+
 	bind_pcvar_float(create_cvar("ctg_spitter_spit_speed_min", "750"), cvar_spit_speed[0]);
 	bind_pcvar_float(create_cvar("ctg_spitter_spit_speed_max", "1500"), cvar_spit_speed[1]);
 	bind_pcvar_float(create_cvar("ctg_spitter_spit_cooldown", "10"), cvar_spit_cooldown);
@@ -60,6 +62,12 @@ public plugin_init()
 	sprite_trail = AssetsGetSprite(g_oClassInfo, "trail");
 	sprite_poison = AssetsGetSprite(g_oClassInfo, "poison");
 	AssetsGetModel(g_oClassInfo, "poison", model_poison, charsmax(model_poison))
+}
+
+public OnRestartRound()
+{
+	remove_entity_name("spit_ent");
+	remove_entity_name("poison_spr");
 }
 
 public OnSpitEntTouch(ent, toucher)
