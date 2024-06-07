@@ -253,7 +253,7 @@ public OnSetModel(ent, model[])
 		info_o = any:ArrayGetCell(g_aGrenades, i);
 		if (oo_call(info_o, "Condition", owner, model[9]))
 		{
-			new class[32];
+			static class[32];
 			oo_get_str(info_o, "class", class, sizeof(class));
 			return oo_call(oo_new(class, ent), "SetWorldModel") ? FMRES_SUPERCEDE : FMRES_IGNORED;
 		}

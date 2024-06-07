@@ -116,7 +116,7 @@ public LightNade@Think()
 			return true;
 		}
 
-		new Float:origin[3];
+		static Float:origin[3];
 		get_entvar(ent, var_origin, origin);
 
 		message_begin_f(MSG_PAS, SVC_TEMPENTITY, origin);

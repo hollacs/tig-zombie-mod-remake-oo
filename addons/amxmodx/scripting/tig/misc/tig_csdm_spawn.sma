@@ -28,7 +28,7 @@ public OnGetPlayerSpawnSpot_Post(id)
 		return;
 	
 	new spawn_index = random(g_SpawnCount);
-	new Float:v[3];
+	static Float:v[3];
 
 	for (new i = spawn_index + 1; ; i++)
 	{

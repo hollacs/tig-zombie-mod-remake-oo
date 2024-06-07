@@ -377,7 +377,7 @@ public PlayerClass@SetProperties(bool:set_team)
 	new Array:models_a = Array:oo_get(info_o, "player_models");
 	if (ArraySize(models_a) > 0)
 	{
-		new model[PlayerModel_e];
+		static model[PlayerModel_e];
 		ArrayGetArray(models_a, random(ArraySize(models_a)), model);
 		rg_set_user_model(id, model[PM_Model], model[PM_Index]);
 	}

@@ -127,7 +127,7 @@ public BurnStatus@RemoveFlame()
 
 	new id = oo_get(this, "player_id");
 
-	new Float:origin[3];
+	static Float:origin[3];
 	get_entvar(id, var_origin, origin);
 
 	if (sprite_smoke)

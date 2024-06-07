@@ -118,7 +118,7 @@ public TaskGameReadyCountDown()
 		set_dhudmessage(0, 255, 0, -1.0, 0.2, 0, 0.0, 1.0, 0.0, 0.0);
 		show_dhudmessage(0, "遊戲將在 %d 秒後開始...", g_GameReadyCount);
 
-		new word[16];
+		static word[16];
 		num_to_word(g_GameReadyCount, word, charsmax(word));
 
 		client_cmd(0, "spk fvox/%s", word);
@@ -129,7 +129,7 @@ public GameStart()
 {
 	g_IsGameStarted = true;
 
-	new players[32], num;
+	static players[32], num;
 	get_players(players, num, "a");
 
 	if (num > 0)

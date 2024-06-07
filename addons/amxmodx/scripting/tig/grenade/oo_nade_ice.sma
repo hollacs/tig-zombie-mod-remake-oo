@@ -116,7 +116,7 @@ public IceNade@Detonate()
 	new this = oo_this();
 	new ent = oo_get(this, "ent");
 
-	new Float:origin[3];
+	static Float:origin[3];
 	get_entvar(ent, var_origin, origin);
 
 	new attacker = get_entvar(ent, var_owner);
@@ -153,7 +153,7 @@ public IceNade@DetonateEffect()
 	new this = oo_this();
 	new ent = oo_get(this, "ent");
 
-	new Float:origin[3];
+	static Float:origin[3];
 	get_entvar(ent, var_origin, origin);
 
 	if (sprite_gibs)
@@ -265,15 +265,15 @@ public IceNade@DetonateEffect()
 	
 bool:CheckTraceLine(ent, victim)
 {
-	new Float:start_orig[3], Float:end_orig[3];
+	static Float:start_orig[3], Float:end_orig[3];
 	get_entvar(ent, var_origin, start_orig);
 	get_entvar(victim, var_origin, end_orig);
 
-	new Float:start[3], Float:end[3], Float:fr;
+	static Float:start[3], Float:end[3], Float:fr;
 	start = start_orig;
 	end = end_orig;
 
-	new Float:v[3], Float:a1[3], Float:a2[3];
+	static Float:v[3], Float:a1[3], Float:a2[3];
 	xs_vec_sub(end, start, a1);
 	xs_vec_normalize(a1, a1);
 	vector_to_angle(a1, a1);
