@@ -9,6 +9,7 @@
         "weapon_knife": "models/p_knife.mdl"
     },
     "sounds": {
-        "cough": ["tig_test/cough1.wav", "tig_test/cough2.wav", "tig_test/cough3.wav"]
+        "cough": ["tig_test/cough1.wav", "tig_test/cough2.wav", "tig_test/cough3.wav"],
+        "poison": ["player/pl_pain4.wav", "player/pl_pain5.wav"]
     }
 }

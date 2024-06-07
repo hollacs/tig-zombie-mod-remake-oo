@@ -21,6 +21,7 @@
     "sounds" : {
         "idle": ["zombie/zo_idle1.wav", "zombie/zo_idle2.wav", "zombie/zo_idle3.wav"],
         "pain": ["zombie/zo_pain1.wav", "zombie/zo_pain2.wav"],
-        "infect": ["tig_test/zombie_infect_01.wav", "tig_test/zombie_infect_02.wav"]
+        "infect": ["tig_test/zombie_infect_01.wav", "tig_test/zombie_infect_02.wav"],
+        "rampage": ["tig_test/zombie_rampage.wav"]
     }
 }

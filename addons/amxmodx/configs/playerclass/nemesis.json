@@ -26,7 +26,8 @@
         "rocket_fly": ["weapons/rocket1.wav"],
         "rocket_explosion": ["weapons/c4_explode1.wav"],
         "idle": ["tig_test/tank_yell_02.wav", "tig_test/tank_yell_04.wav"],
-        "pain": ["tig_test/hulk_pain_2.wav", "tig_test/hulk_pain_12.wav", "tig_test/hulk_pain_13.wav"]
+        "pain": ["tig_test/hulk_pain_2.wav", "tig_test/hulk_pain_12.wav", "tig_test/hulk_pain_13.wav"],
+        "rampage": ["tig_test/zombie_rampage.wav"]
     },
     "sprites": {
         "trail": "sprites/laserbeam.spr",
