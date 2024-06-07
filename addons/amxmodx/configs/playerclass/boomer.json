@@ -1,0 +1,31 @@
+{
+    "player_models" : {
+        "tig_test_boomer": false
+    },
+    "v_models" : {
+        "weapon_knife": "models/tig_test/v_boomer_claw.mdl"
+    },
+    "p_models" : {
+        "weapon_knife": ""
+    },
+    "replace_sounds" : {
+        "weapons/knife_hitwall1.wav": ["zombie/claw_miss1.wav", "zombie/claw_miss2.wav"],
+        "weapons/knife_slash*": ["zombie/claw_miss1.wav", "zombie/claw_miss2.wav"],
+        "weapons/knife_hit*": ["zombie/claw_strike1.wav", "zombie/claw_strike2.wav"],
+        "weapons/knife_stab.wav": ["zombie/claw_strike3.wav"],
+        "player/bhit_flesh-*": ["player/bhit_flesh-1.wav", "player/bhit_flesh-2.wav", "player/bhit_flesh-3.wav"],
+        "player/headshot*": ["player/headshot1.wav", "player/headshot2.wav", "player/headshot3.wav"]
+        //"player/die*": ["player/die1.wav", "player/die2.wav", "player/die3.wav"],
+        //"player/death*": ["player/death6.wav"]
+    },
+    "sounds" : {
+        "idle": ["zombie/zo_idle1.wav", "zombie/zo_idle2.wav", "zombie/zo_idle3.wav"],
+        "pain": ["zombie/zo_pain1.wav", "zombie/zo_pain2.wav"],
+        "infect": ["tig_test/zombie_infect_01.wav", "tig_test/zombie_infect_02.wav"],
+        "explosion": ["tig_test/boomer_explo_01.wav"],
+        "rampage": ["tig_test/zombie_rampage.wav"]
+    },
+    "sprites" : {
+        "shockwave" : "sprites/shockwave.spr"
+    }
+}
