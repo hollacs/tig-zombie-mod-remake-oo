@@ -26,7 +26,6 @@ public oo_init()
 
 		oo_mthd(cl, "GetClassInfo");
 		oo_mthd(cl, "OnCmdStart", @int(uc), @int(seed));
-		oo_mthd(cl, "SetProperties", @bool(set_team));
 		oo_mthd(cl, "Spit", @fl(time));
 	}
 }
@@ -53,11 +52,13 @@ public plugin_init()
 	bind_pcvar_float(create_cvar("ctg_spitter_spit_radius", "100"), cvar_spit_radius);
 
 	oo_call(g_oClassInfo, "CreateCvars");
-	oo_call(g_oClassInfo, "CreateCvar", "ctg_spitter", "health", "3000");
-	oo_call(g_oClassInfo, "CreateCvar", "ctg_spitter", "health2", "80");
+	oo_call(g_oClassInfo, "CreateCvar", "ctg_spitter", "health", "2500");
+	oo_call(g_oClassInfo, "CreateCvar", "ctg_spitter", "health2", "90");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_spitter", "gravity", "0.95");
-	oo_call(g_oClassInfo, "CreateCvar", "ctg_spitter", "speed", "1.05");
+	oo_call(g_oClassInfo, "CreateCvar", "ctg_spitter", "speed", "1.0");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_spitter", "dmg", "1.1");
+	oo_call(g_oClassInfo, "CreateCvar", "ctg_spitter", "knockback", "1.0");
+	oo_call(g_oClassInfo, "CreateCvar", "ctg_spitter", "painshock", "1.0");
 
 	sprite_trail = AssetsGetSprite(g_oClassInfo, "trail");
 	sprite_poison = AssetsGetSprite(g_oClassInfo, "poison");
@@ -212,20 +213,6 @@ public OnPoisonSpr(ent)
 public PlayerClassInfo:Spitter@GetClassInfo()
 {
 	return g_oClassInfo;
-}
-
-public Spitter@SetProperties(bool:set_team)
-{
-	new this = oo_this();
-	new id = oo_get(this, "player_id");
-	oo_call(this, "SpecialInfected@SetProperties", set_team);
-
-	new pcvar;
-	if ((pcvar = oo_call(this, "GetCvarPtr", "health2")))
-	{
-		set_entvar(id, var_health, Float:get_entvar(id, var_health) + oo_playerclass_count("Human") * get_pcvar_float(pcvar))
-		oo_player_set_max_health(id, floatround(Float:get_entvar(id, var_health)));
-	}
 }
 
 public Spitter@OnCmdStart(uc, seed)
