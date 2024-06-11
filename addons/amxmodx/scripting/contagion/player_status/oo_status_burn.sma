@@ -84,13 +84,12 @@ public BurnStatus@OnUpdate()
 	new this = oo_this();
 	new id = oo_get(this, "player_id");
 
-	oo_call(this, "SustainedDamage@OnUpdate");
-
 	if (get_entvar(id, var_flags) & FL_INWATER)
 	{
 		oo_set(this, "killme", true);
-		return;
-	}	
+	}
+
+	oo_call(this, "SustainedDamage@OnUpdate");
 }
 
 public BurnStatus@CreateFlame()
