@@ -1,6 +1,7 @@
 #include <amxmodx>
 #include <reapi>
 #include <engine>
+#include <fakemeta>
 #include <hamsandwich>
 #include <xs>
 #include <oo_player_class>
@@ -8,6 +9,8 @@
 #include <oo_assets>
 #include <cs_painshock>
 #include <cs_knockback>
+
+const KNIFE_STABHIT = 4;
 
 new PlayerClassInfo:g_oClassInfo;
 new Float:cvar_idle_sound_time[2], Float:cvar_pain_sound_time[2];
@@ -41,7 +44,12 @@ public oo_init()
 		oo_mthd(cl, "OnTakeDamage", @cell, @cell, @byref, @cell);
 		oo_mthd(cl, "OnThink");
 		oo_mthd(cl, "OnPainShock", @cell, @float, @byref);
+		oo_mthd(cl, "OnPainShockBy", @cell, @float, @byref);
 		oo_mthd(cl, "OnKnockBack", @cell, @float, @cell, @array[3]);
+		oo_mthd(cl, "OnKnifeAttack1", @cell);
+		oo_mthd(cl, "OnKnifeAttack2", @cell);
+		oo_mthd(cl, "OnKnifeAttack1_Post", @cell);
+		oo_mthd(cl, "OnKnifeAttack2_Post", @cell);
 		oo_mthd(cl, "Rampage");
 	}
 }
@@ -58,15 +66,23 @@ public plugin_init()
 
 	register_clcmd("drop", "CmdDrop");
 
+	RegisterHam(Ham_Weapon_PrimaryAttack, "weapon_knife", "OnKnifePrimaryAttack");
+	RegisterHam(Ham_Weapon_SecondaryAttack, "weapon_knife", "OnKnifeSecondaryAttack");
+	RegisterHam(Ham_Weapon_PrimaryAttack, "weapon_knife", "OnKnifePrimaryAttack_Post", 1);
+	RegisterHam(Ham_Weapon_SecondaryAttack, "weapon_knife", "OnKnifeSecondaryAttack_Post", 1);
+
+	//register_forward(FM_TraceLine, "OnTraceLine");
+	//register_forward(FM_TraceHull, "OnTraceHull");
+
 	oo_call(g_oClassInfo, "CreateCvars");
 
 	bind_pcvar_float(
-		oo_call(g_oClassInfo, "CreateCvar", "ctg_zombie", "idle_sound_time_min", "40"),
+		oo_call(g_oClassInfo, "CreateCvar", "ctg_zombie", "idle_sound_time_min", "45"),
 		cvar_idle_sound_time[0]);
 
 	bind_pcvar_float(
-		oo_call(g_oClassInfo, "CreateCvar", "ctg_zombie", "idle_sound_time_max", "80"),
-		cvar_idle_sound_time[0]);
+		oo_call(g_oClassInfo, "CreateCvar", "ctg_zombie", "idle_sound_time_max", "90"),
+		cvar_idle_sound_time[1]);
 
 	bind_pcvar_float(
 		oo_call(g_oClassInfo, "CreateCvar", "ctg_zombie", "pain_sound_time_min", "1.0"),
@@ -81,25 +97,32 @@ public ZombieClassInfo@CreateCvars()
 {
 	new this = oo_this();
 
-	oo_call(this, "CreateCvar", "ctg_zombie", "dmg_slash", "10");
-	oo_call(this, "CreateCvar", "ctg_zombie", "dmg_stab", "40");
-	oo_call(this, "CreateCvar", "ctg_zombie", "dmg_head", "3.0");
-	oo_call(this, "CreateCvar", "ctg_zombie", "dmg_backstab", "1.25");
-	oo_call(this, "CreateCvar", "ctg_zombie", "dmg", "1.0");
-	oo_call(this, "CreateCvar", "ctg_zombie", "health", "1000");
-	oo_call(this, "CreateCvar", "ctg_zombie", "gravity", "1.0");
-	oo_call(this, "CreateCvar", "ctg_zombie", "speed", "1.0");
-	oo_call(this, "CreateCvar", "ctg_zombie", "knockback", "1.0");
-	oo_call(this, "CreateCvar", "ctg_zombie", "painshock", "1.0");
-	oo_call(this, "CreateCvar", "ctg_zombie", "armor_penetration", "0.0");
-	oo_call(this, "CreateCvar", "ctg_zombie", "ap_max", "100");
-	oo_call(this, "CreateCvar", "ctg_zombie", "ap_needed", "100");
-	oo_call(this, "CreateCvar", "ctg_zombie", "ap_ratio", "0.35");
-	oo_call(this, "CreateCvar", "ctg_zombie", "ap_restore_time", "1.0");
-	oo_call(this, "CreateCvar", "ctg_zombie", "ap_restore_amt", "1.0");
-	oo_call(this, "CreateCvar", "ctg_zombie", "rampage_duration", "7.5");
-	oo_call(this, "CreateCvar", "ctg_zombie", "rampage_speed", "1.3");
-	oo_call(this, "CreateCvar", "ctg_zombie", "rampage_takedmg", "1.2");
+	oo_call(this, "CreateCvar", "ctg_zombie", "health", "1000"); // 生命
+	oo_call(this, "CreateCvar", "ctg_zombie", "gravity", "1.0"); // 重力
+	oo_call(this, "CreateCvar", "ctg_zombie", "speed", "1.0"); // 速度
+	oo_call(this, "CreateCvar", "ctg_zombie", "knockback", "1.0"); // 擊退
+	oo_call(this, "CreateCvar", "ctg_zombie", "painshock", "1.0"); // 僵直
+	oo_call(this, "CreateCvar", "ctg_zombie", "armor_penetration", "0.0"); // 攻擊對人類的破甲率
+	oo_call(this, "CreateCvar", "ctg_zombie", "ap_add_ratio", "0.35"); // 受到傷害對喪屍護甲增加的比率 (血量比率)
+	oo_call(this, "CreateCvar", "ctg_zombie", "ap_restore_max", "100"); // 最大能恢復的護甲值
+	oo_call(this, "CreateCvar", "ctg_zombie", "ap_restore_time", "1.0"); // 自動回甲的時間
+	oo_call(this, "CreateCvar", "ctg_zombie", "ap_restore_amt", "1"); // 每次回多少甲
+	oo_call(this, "CreateCvar", "ctg_zombie", "rampage_duration", "7.0"); // 暴走持續時間
+	oo_call(this, "CreateCvar", "ctg_zombie", "rampage_speed", "1.3"); // 暴走速度
+	oo_call(this, "CreateCvar", "ctg_zombie", "rampage_takedmg", "1.2"); // 暴走時承受的傷害倍率
+	oo_call(this, "CreateCvar", "ctg_zombie", "rampage_needed", "100"); // 暴走需要的護甲值
+	oo_call(this, "CreateCvar", "ctg_zombie", "swing_dmg", "10"); // 左刀傷害
+	oo_call(this, "CreateCvar", "ctg_zombie", "swing2_dmg", "13"); // 左刀傷害2
+	oo_call(this, "CreateCvar", "ctg_zombie", "swing_speed", "1.0"); // 左刀攻擊速度
+	oo_call(this, "CreateCvar", "ctg_zombie", "swing_dist", "48"); // 左刀攻擊距離
+	oo_call(this, "CreateCvar", "ctg_zombie", "swing_pain", "0.9"); // 左刀對人類造成的僵直
+	oo_call(this, "CreateCvar", "ctg_zombie", "stab_dmg", "40"); // 右刀傷害
+	oo_call(this, "CreateCvar", "ctg_zombie", "stab_speed", "1.0"); // 右刀攻擊速度
+	oo_call(this, "CreateCvar", "ctg_zombie", "stab_dist", "32"); // 右刀攻擊距離
+	oo_call(this, "CreateCvar", "ctg_zombie", "stab_pain", "1.0"); // 右刀對人類造成的僵直
+	oo_call(this, "CreateCvar", "ctg_zombie", "backstab_dmg", "1.25"); // 背刀傷害
+	oo_call(this, "CreateCvar", "ctg_zombie", "attack_pain", "1.0"); // 攻擊對人類造成的整體僵直
+	oo_call(this, "CreateCvar", "ctg_zombie", "dmg", "1.0"); // 整體傷害
 }
 
 public CmdDrop(id)
@@ -170,7 +193,7 @@ public Zombie@OnThink()
 
 		new pcvar_amt, pcvar_max;
 		if (TrieGetCell(cvars_t, "ap_restore_amt", pcvar_amt) &&
-			TrieGetCell(cvars_t, "ap_max", pcvar_max))
+			TrieGetCell(cvars_t, "ap_restore_max", pcvar_max))
 		{
 			set_entvar(id, var_armorvalue, floatmin(
 				Float:get_entvar(id, var_armorvalue) + get_pcvar_float(pcvar_amt), 
@@ -180,7 +203,7 @@ public Zombie@OnThink()
 		if (is_user_bot(id))
 		{
 			new pcvar_needed;
-			if (TrieGetCell(cvars_t, "ap_needed", pcvar_needed))
+			if (TrieGetCell(cvars_t, "rampage_needed", pcvar_needed))
 			{
 				if (Float:get_entvar(id, var_armorvalue) >= get_pcvar_float(pcvar_needed))
 				{
@@ -274,8 +297,6 @@ public Zombie@OnGiveDamage(inflictor, victim, &Float:damage, damagebits)
 	{
 		if (oo_playerclass_isa(victim, "Human"))
 		{
-			const KNIFE_STABHIT = 4;
-
 			new pcvar;
 			if (TrieGetCell(cvars_t, "dmg_head", pcvar))
 			{
@@ -291,22 +312,11 @@ public Zombie@OnGiveDamage(inflictor, victim, &Float:damage, damagebits)
 			new anim = get_entvar(attacker, var_weaponanim);
 			if (anim == KNIFE_STABHIT) // stab
 			{
-				if (TrieGetCell(cvars_t, "dmg_backstabe", pcvar) && IsBackStab(attacker, victim))
-				{
-					damage /= 3.0;
-					damage *= get_pcvar_float(pcvar);
-				}
-
-				if (TrieGetCell(cvars_t, "dmg_stab", pcvar))
-					damage *= get_pcvar_float(pcvar) / 65.0;
-
 				if (armor <= 0.0)
 					oo_call(0, "VirusStatus@Add", victim, attacker, 1.0, 1.0, 10);
 			}
-			else if (TrieGetCell(cvars_t, "dmg_slash", pcvar)) // slash
+			else
 			{
-				damage *= get_pcvar_float(pcvar) / 15.0;
-
 				if (armor <= 0.0)
 					oo_call(0, "VirusStatus@Add", victim, attacker, 1.0, 1.0, 3);
 			}
@@ -337,9 +347,9 @@ public Zombie@OnTakeDamage(inflictor, attacker, &Float:damage, damagebits)
 	new Trie:cvars_t = any:oo_get(info_o, "cvars");
 
 	new pcvar_ratio, pcvar_needed, pcvar_max;
-	if (TrieGetCell(cvars_t, "ap_ratio", pcvar_ratio) &&
-		TrieGetCell(cvars_t, "ap_needed", pcvar_needed) &&
-		TrieGetCell(cvars_t, "ap_max", pcvar_max))
+	if (TrieGetCell(cvars_t, "ap_add_ratio", pcvar_ratio) &&
+		TrieGetCell(cvars_t, "rampage_needed", pcvar_needed) &&
+		TrieGetCell(cvars_t, "ap_restore_max", pcvar_max))
 	{
 		new max_health = oo_player_get_max_health(id);
 		new Float:ratio = get_pcvar_float(pcvar_needed) / (max_health * get_pcvar_float(pcvar_ratio));
@@ -366,7 +376,7 @@ public bool:Zombie@Rampage()
 	if (!TrieGetCell(cvars_t, "rampage_duration", pcvar_duration) ||
 		!TrieGetCell(cvars_t, "rampage_speed", pcvar_speed) ||
 		!TrieGetCell(cvars_t, "rampage_takedmg", pcvar_takedmg) ||
-		!TrieGetCell(cvars_t, "ap_needed", pcvar_needed))
+		!TrieGetCell(cvars_t, "rampage_needed", pcvar_needed))
 		return false;
 
 	new needed = get_pcvar_num(pcvar_needed);
@@ -405,7 +415,34 @@ public Float:Zombie@GetArmorPenetration()
 	return 0.0;
 }
 
-public Zombie@OnPainShock(attacker, Float:damage, &Float:value)
+public Zombie@OnPainShock(victim, Float:damage, &Float:value)
+{
+	new this = oo_this();
+	new id = oo_get(this, "player_id");
+
+	if (get_user_weapon(id) != CSW_KNIFE)
+		return;
+
+	new pcvar;
+	new anim = get_entvar(id, var_weaponanim);
+	if (anim == KNIFE_STABHIT) // stab
+		pcvar = oo_call(this, "GetCvarPtr", "stab_pain");
+	else
+		pcvar = oo_call(this, "GetCvarPtr", "slash_pain");
+
+	if (!pcvar)
+		return;
+
+	value *= get_pcvar_float(pcvar);
+	
+	pcvar = oo_call(this, "GetCvarPtr", "attack_pain");
+	if (!pcvar)
+		return;
+	
+	value *= get_pcvar_float(pcvar);
+}
+
+public Zombie@OnPainShockBy(attacker, Float:damage, &Float:value)
 {
 	new this = oo_this();
 
@@ -427,12 +464,164 @@ public Zombie@OnKnockBack(attacker, Float:damage, tr, Float:vec[3])
 	}
 }
 
-public CS_OnPainShock_Post(victim, inflictor, attacker, Float:damage, damagebits, &Float:value)
+public Zombie@OnKnifeAttack1(ent)
 {
-	new PlayerClass:class_o = oo_playerclass_get(victim)
+	new this = oo_this();
+
+	new PlayerClassInfo:info_o = any:oo_call(this, "GetClassInfo");
+	if (info_o == @null)
+		return false;
+
+	new Trie:cvars_t = any:oo_get(info_o, "cvars");
+	new pcvar;
+
+	if (TrieGetCell(cvars_t, "swing_dmg", pcvar))
+		set_member(ent, m_Knife_flSwingBaseDamage, get_pcvar_float(pcvar));
+
+	if (TrieGetCell(cvars_t, "swing2_dmg", pcvar))
+		set_member(ent, m_Knife_flSwingBaseDamage_Fast, get_pcvar_float(pcvar));
+
+	if (TrieGetCell(cvars_t, "swing_dist", pcvar))
+		set_member(ent, m_Knife_flSwingDistance, get_pcvar_float(pcvar));
+
+	return false;
+}
+
+public Zombie@OnKnifeAttack2(ent)
+{
+	new this = oo_this();
+
+	new PlayerClassInfo:info_o = any:oo_call(this, "GetClassInfo");
+	if (info_o == @null)
+		return false;
+
+	new Trie:cvars_t = any:oo_get(info_o, "cvars");
+	new pcvar;
+
+	if (TrieGetCell(cvars_t, "stab_dmg", pcvar))
+		set_member(ent, m_Knife_flStabBaseDamage, get_pcvar_float(pcvar));
+
+	if (TrieGetCell(cvars_t, "stab_dist", pcvar))
+		set_member(ent, m_Knife_flStabDistance, get_pcvar_float(pcvar));
+
+	if (TrieGetCell(cvars_t, "backstab_dmg", pcvar))
+		set_member(ent, m_Knife_flBackStabMultiplier, get_pcvar_float(pcvar));
+
+	return false;
+}
+
+public Zombie@OnKnifeAttack1_Post(ent)
+{
+	new this = oo_this();
+
+	new pcvar = oo_call(this, "GetCvarPtr", "swing_speed");
+	if (pcvar)
+	{
+		set_member(ent, m_Weapon_flNextPrimaryAttack, 
+			Float:get_member(ent, m_Weapon_flNextPrimaryAttack) * get_pcvar_float(pcvar));
+		set_member(ent, m_Weapon_flNextSecondaryAttack, 
+			Float:get_member(ent, m_Weapon_flNextSecondaryAttack) * get_pcvar_float(pcvar));
+		set_member(ent, m_Weapon_flTimeWeaponIdle, 
+			Float:get_member(ent, m_Weapon_flTimeWeaponIdle) * get_pcvar_float(pcvar));
+	}
+}
+
+public Zombie@OnKnifeAttack2_Post(ent)
+{
+	new this = oo_this();
+	
+	new pcvar = oo_call(this, "GetCvarPtr", "stab_speed");
+	if (pcvar)
+	{
+		set_member(ent, m_Weapon_flNextPrimaryAttack, 
+			Float:get_member(ent, m_Weapon_flNextPrimaryAttack) * get_pcvar_float(pcvar));
+		set_member(ent, m_Weapon_flNextSecondaryAttack, 
+			Float:get_member(ent, m_Weapon_flNextSecondaryAttack) * get_pcvar_float(pcvar));
+		set_member(ent, m_Weapon_flTimeWeaponIdle, 
+			Float:get_member(ent, m_Weapon_flTimeWeaponIdle) * get_pcvar_float(pcvar));
+	}
+}
+
+public OnKnifePrimaryAttack(ent)
+{
+	if (!is_entity(ent))
+		return HAM_IGNORED;
+	
+	new player = get_member(ent, m_pPlayer);
+	if (!player)
+		return HAM_IGNORED;
+	
+	new PlayerClass:class_o = oo_playerclass_get(player)
 	if (class_o != @null && oo_isa(class_o, "Zombie"))
 	{
-		oo_call(class_o, "OnPainShock", attacker, damage, value);
+		return oo_call(class_o, "OnKnifeAttack1", ent) ? HAM_SUPERCEDE : HAM_IGNORED;
+	}
+
+	return HAM_IGNORED;
+}
+
+public OnKnifeSecondaryAttack(ent)
+{
+	if (!is_entity(ent))
+		return HAM_IGNORED;
+	
+	new player = get_member(ent, m_pPlayer);
+	if (!player)
+		return HAM_IGNORED;
+	
+	new PlayerClass:class_o = oo_playerclass_get(player)
+	if (class_o != @null && oo_isa(class_o, "Zombie"))
+	{
+		return oo_call(class_o, "OnKnifeAttack2", ent) ? HAM_SUPERCEDE : HAM_IGNORED;
+	}
+
+	return HAM_IGNORED;
+}
+
+public OnKnifePrimaryAttack_Post(ent)
+{
+	if (!is_entity(ent))
+		return;
+	
+	new player = get_member(ent, m_pPlayer);
+	if (!player)
+		return;
+	
+	new PlayerClass:class_o = oo_playerclass_get(player)
+	if (class_o != @null && oo_isa(class_o, "Zombie"))
+	{
+		oo_call(class_o, "OnKnifeAttack1_Post", ent);
+	}
+}
+
+public OnKnifeSecondaryAttack_Post(ent)
+{
+	if (!is_entity(ent))
+		return;
+	
+	new player = get_member(ent, m_pPlayer);
+	if (!player)
+		return;
+	
+	new PlayerClass:class_o = oo_playerclass_get(player)
+	if (class_o != @null && oo_isa(class_o, "Zombie"))
+	{
+		oo_call(class_o, "OnKnifeAttack2_Post", ent);
+	}
+}
+
+public CS_OnPainShock_Post(victim, inflictor, attacker, Float:damage, damagebits, &Float:value)
+{
+	new PlayerClass:class_o = oo_playerclass_get(victim);
+	if (class_o != @null && oo_isa(class_o, "Zombie"))
+	{
+		oo_call(class_o, "OnPainShockBy", attacker, damage, value);
+	}
+
+	class_o = oo_playerclass_get(attacker);
+	if (class_o != @null && oo_isa(class_o, "Zombie"))
+	{
+		oo_call(class_o, "OnPainShock", victim, damage, value);
 	}
 }
 
@@ -443,19 +632,4 @@ public CS_OnKnockBack_Post(victim, attacker, Float:damage, tr, Float:vec[3])
 	{
 		oo_call(class_o, "OnKnockBack", attacker, damage, tr, vec);
 	}
-}
-
-stock bool:IsBackStab(attacker, victim)
-{
-	static Float:vlos[3];
-	static Float:vforward[3];
-
-	velocity_by_aim(attacker, 1, vlos);
-	xs_vec_normalize(vlos, vlos);
-
-	get_entvar(victim, var_angles, vforward);
-	angle_vector(vforward, ANGLEVECTOR_FORWARD, vforward);
-
-	vlos[2] = vforward[2] = 0.0;
-	return (xs_vec_dot(vlos, vforward) > 0.8)
 }
