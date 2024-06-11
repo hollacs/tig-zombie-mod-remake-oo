@@ -105,7 +105,7 @@ public OnPlayerSpawn_Post(id)
 
 public OnTakeDamage_Post(id, inflictor, attacker, Float:damage, damagebits)
 {
-	if (!cvar_enable || inflictor != attacker || !(1 <= attacker <= MaxClients) || !(damagebits & DMG_BULLET))
+	if (!cvar_enable || inflictor != attacker || id == attacker || !(1 <= attacker <= MaxClients) || !(damagebits & DMG_BULLET))
 		return;
 
 	if (get_member(id, m_iTeam) == get_member(attacker, m_iTeam))
