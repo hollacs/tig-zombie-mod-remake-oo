@@ -1,5 +1,6 @@
 #include <amxmodx>
 #include <reapi>
+#include <hamsandwich>
 #include <oo_player_class>
 #include <cs_painshock>
 
@@ -14,6 +15,11 @@ public plugin_precache()
 public plugin_init()
 {
 	register_plugin("[OO] Class: Human", "0.1", "holla");
+
+	RegisterHam(Ham_Weapon_PrimaryAttack, "weapon_knife", "OnKnifePrimaryAttack");
+	RegisterHam(Ham_Weapon_SecondaryAttack, "weapon_knife", "OnKnifeSecondaryAttack");
+	RegisterHam(Ham_Weapon_PrimaryAttack, "weapon_knife", "OnKnifePrimaryAttack_Post", 1);
+	RegisterHam(Ham_Weapon_SecondaryAttack, "weapon_knife", "OnKnifeSecondaryAttack_Post", 1);
 
 	oo_call(g_oClassInfo, "CreateCvars");
 }
@@ -38,6 +44,10 @@ public oo_init()
 		oo_mthd(cl, "GetArmorDefense");
 		oo_mthd(cl, "OnTakeDamage", @int(inflictor), @int(attacker), @ref(damage), @int(damagebits));
 		oo_mthd(cl, "OnPainShock", @cell, @float, @byref);
+		oo_mthd(cl, "OnKnifeAttack1", @cell);
+		oo_mthd(cl, "OnKnifeAttack2", @cell);
+		oo_mthd(cl, "OnKnifeAttack1_Post", @cell);
+		oo_mthd(cl, "OnKnifeAttack2_Post", @cell);
 	}
 }
 
@@ -55,6 +65,12 @@ public HumanClassInfo@CreateCvars()
 	oo_call(this, "CreateCvar", "ctg_human", "armor_defense", "1.0");
 	oo_call(this, "CreateCvar", "ctg_human", "painshock", "1.0");
 	oo_call(this, "CreateCvar", "ctg_human", "painshock_armor", "0.5");
+	oo_call(this, "CreateCvar", "ctg_human", "swing_dmg", "15");
+	oo_call(this, "CreateCvar", "ctg_human", "swing2_dmg", "20");
+	oo_call(this, "CreateCvar", "ctg_human", "swing_dist", "48");
+	oo_call(this, "CreateCvar", "ctg_human", "stab_dmg", "65");
+	oo_call(this, "CreateCvar", "ctg_human", "stab_dist", "32");
+	oo_call(this, "CreateCvar", "ctg_human", "backstab_dmg", "3.0");
 }
 
 public Human@Ctor(player)
@@ -155,6 +171,129 @@ public Human@OnPainShock(attacker, Float:damage, &Float:value)
 		{
 			value *= get_pcvar_float(pcvar_painshock_armor);
 		}
+	}
+}
+
+
+public Human@OnKnifeAttack1(ent)
+{
+	new this = oo_this();
+
+	new PlayerClassInfo:info_o = any:oo_call(this, "GetClassInfo");
+	if (info_o == @null)
+		return false;
+
+	new Trie:cvars_t = any:oo_get(info_o, "cvars");
+	new pcvar;
+
+	if (TrieGetCell(cvars_t, "swing_dmg", pcvar))
+		set_member(ent, m_Knife_flSwingBaseDamage, get_pcvar_float(pcvar));
+
+	if (TrieGetCell(cvars_t, "swing2_dmg", pcvar))
+		set_member(ent, m_Knife_flSwingBaseDamage_Fast, get_pcvar_float(pcvar));
+
+	if (TrieGetCell(cvars_t, "swing_dist", pcvar))
+		set_member(ent, m_Knife_flSwingDistance, get_pcvar_float(pcvar));
+
+	return false;
+}
+
+public Human@OnKnifeAttack2(ent)
+{
+	new this = oo_this();
+
+	new PlayerClassInfo:info_o = any:oo_call(this, "GetClassInfo");
+	if (info_o == @null)
+		return false;
+
+	new Trie:cvars_t = any:oo_get(info_o, "cvars");
+	new pcvar
+
+	if (TrieGetCell(cvars_t, "stab_dmg", pcvar))
+		set_member(ent, m_Knife_flStabBaseDamage, get_pcvar_float(pcvar));
+
+	if (TrieGetCell(cvars_t, "stab_dist", pcvar))
+		set_member(ent, m_Knife_flStabDistance, get_pcvar_float(pcvar));
+
+	if (TrieGetCell(cvars_t, "backstab_dmg", pcvar))
+		set_member(ent, m_Knife_flBackStabMultiplier, get_pcvar_float(pcvar));
+
+	return false;
+}
+
+public Human@OnKnifeAttack1_Post(ent)
+{
+}
+
+public Human@OnKnifeAttack2_Post(ent)
+{
+}
+
+public OnKnifePrimaryAttack(ent)
+{
+	if (!is_entity(ent))
+		return HAM_IGNORED;
+	
+	new player = get_member(ent, m_pPlayer);
+	if (!player)
+		return HAM_IGNORED;
+	
+	new PlayerClass:class_o = oo_playerclass_get(player);
+	if (class_o != @null && oo_isa(class_o, "Human"))
+	{
+		return oo_call(class_o, "OnKnifeAttack1", ent) ? HAM_SUPERCEDE : HAM_IGNORED;
+	}
+
+	return HAM_IGNORED;
+}
+
+public OnKnifeSecondaryAttack(ent)
+{
+	if (!is_entity(ent))
+		return HAM_IGNORED;
+	
+	new player = get_member(ent, m_pPlayer);
+	if (!player)
+		return HAM_IGNORED;
+	
+	new PlayerClass:class_o = oo_playerclass_get(player);
+	if (class_o != @null && oo_isa(class_o, "Human"))
+	{
+		return oo_call(class_o, "OnKnifeAttack2", ent) ? HAM_SUPERCEDE : HAM_IGNORED;
+	}
+
+	return HAM_IGNORED;
+}
+
+public OnKnifePrimaryAttack_Post(ent)
+{
+	if (!is_entity(ent))
+		return;
+	
+	new player = get_member(ent, m_pPlayer);
+	if (!player)
+		return;
+	
+	new PlayerClass:class_o = oo_playerclass_get(player);
+	if (class_o != @null && oo_isa(class_o, "Human"))
+	{
+		oo_call(class_o, "OnKnifeAttack1_Post", ent);
+	}
+}
+
+public OnKnifeSecondaryAttack_Post(ent)
+{
+	if (!is_entity(ent))
+		return;
+	
+	new player = get_member(ent, m_pPlayer);
+	if (!player)
+		return;
+	
+	new PlayerClass:class_o = oo_playerclass_get(player);
+	if (class_o != @null && oo_isa(class_o, "Human"))
+	{
+		oo_call(class_o, "OnKnifeAttack2_Post", ent);
 	}
 }
 
