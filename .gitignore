@@ -12,6 +12,8 @@ logs/
 /addons/amxmodx/scripting/compiled/
 /addons/yapb/
 /addons/ebot/
+/banned.cfg
+desktop.ini
 
 # all default files
 /ajawad.wad
