@@ -1,4 +1,5 @@
 #include <amxmodx>
+#include <reapi>
 #include <oo_player_class>
 
 new PlayerClassInfo:g_oClassInfo;
@@ -9,6 +10,7 @@ public oo_init()
 	{
 		new const cl[] = "SpecialInfected";
 		oo_mthd(cl, "GetClassInfo");
+		oo_mthd(cl, "SetProperties", @bool(set_team));
 	}
 }
 
@@ -26,4 +28,18 @@ public plugin_init()
 public PlayerClassInfo:SpecialInfected@GetClassInfo()
 {
 	return g_oClassInfo;
+}
+
+public SpecialInfected@SetProperties(bool:set_team)
+{
+	new this = oo_this();
+	new id = oo_get(this, "player_id");
+	oo_call(this, "Zombie@SetProperties", set_team);
+
+	new pcvar;
+	if ((pcvar = oo_call(this, "GetCvarPtr", "health2")))
+	{
+		set_entvar(id, var_health, Float:get_entvar(id, var_health) + oo_playerclass_count("Human") * get_pcvar_float(pcvar))
+		oo_player_set_max_health(id, floatround(Float:get_entvar(id, var_health)));
+	}
 }
