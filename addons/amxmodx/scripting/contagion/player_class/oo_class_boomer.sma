@@ -25,7 +25,6 @@ public oo_init()
 		oo_mthd(cl, "GetClassInfo");
 		oo_mthd(cl, "OnCmdStart", @int(uc), @int(seed));
 		oo_mthd(cl, "OnKilledBy", @int(attacker), @int(shouldgibs));
-		oo_mthd(cl, "SetProperties", @bool(set_team));
 		oo_mthd(cl, "Boom", @bool(kill));
 		oo_mthd(cl, "CreateSpawnEnt");
 	}
@@ -56,7 +55,11 @@ public plugin_init()
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "health2", "100");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "gravity", "1.0");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "speed", "0.95");
-	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "dmg", "1.0");
+	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "dmg", "1.15");
+	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "knockback", "0.8");
+	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "painshock", "0.9");
+	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "swing_speed", "2.0");
+	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "stab_speed", "1.5");
 
 	sprite_shockwave = AssetsGetSprite(g_oClassInfo, "shockwave");
 }
@@ -64,20 +67,6 @@ public plugin_init()
 public PlayerClassInfo:Boomer@GetClassInfo()
 {
 	return g_oClassInfo;
-}
-
-public Boomer@SetProperties(bool:set_team)
-{
-	new this = oo_this();
-	new id = oo_get(this, "player_id");
-	oo_call(this, "SpecialInfected@SetProperties", set_team);
-
-	new pcvar;
-	if ((pcvar = oo_call(this, "GetCvarPtr", "health2")))
-	{
-		set_entvar(id, var_health, Float:get_entvar(id, var_health) + oo_playerclass_count("Human") * get_pcvar_float(pcvar))
-		oo_player_set_max_health(id, floatround(Float:get_entvar(id, var_health)));
-	}
 }
 
 public Boomer@OnCmdStart(uc, seed)
@@ -273,7 +262,9 @@ public Boomer@Boom(bool:kill)
 		ExecuteHamB(Ham_TakeDamage, victim, attacker, attacker, damage, DMG_GRENADE);
 	}
 
-	user_kill(id);
+	if (kill)
+		user_kill(id);
+
 	oo_call(this, "CreateSpawnEnt");
 }
 
@@ -307,7 +298,7 @@ public OnRestartRound()
 public ctg_OnGetPlayerSpawnSpot(id)
 {
 	if (!oo_playerclass_isa(id, "Zombie"))
-		return;
+		return PLUGIN_CONTINUE;
 		
 	new spawn_ent[3], spawn_ent_num = 0;
 
