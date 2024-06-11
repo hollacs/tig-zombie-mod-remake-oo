@@ -67,6 +67,7 @@ public RampageStatus@Ctor(player, Float:duration, Float:speed, Float:takedmg)
 	oo_set_arr(this, "render", render);
 
 	oo_call(this, "SetRendering");
+	SetFov(player, 100);
 
 	RequestFrame("ResetMaxSpeed", player);
 }
@@ -77,6 +78,7 @@ public RampageStatus@Dtor()
 	new id = oo_get(this, "player_id");
 	rg_reset_maxspeed(id);
 	oo_call(this, "ResetRendering");
+	SetFov(id, 90);
 }
 
 public RampageStatus@GetName(output[], len)
@@ -162,4 +164,14 @@ public OO_OnPlayerClassDtor(id)
 public ResetMaxSpeed(id)
 {
 	rg_reset_maxspeed(id);
+}
+
+SetFov(id, fov)
+{
+	static msgSetFOV;
+	msgSetFOV || (msgSetFOV = get_user_msgid("SetFOV"));
+
+	message_begin(MSG_ONE_UNRELIABLE, msgSetFOV, _, id);
+	write_byte(fov);
+	message_end();
 }
