@@ -33,6 +33,7 @@ public plugin_init()
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_leader", "sec_guns", "deagle");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_leader", "nades", "hegrenade flashbang smokegrenade");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_leader", "swing_knockback", "400");
+	oo_call(g_oClassInfo, "CreateCvar", "ctg_leader", "stab_knockback", "800");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_leader", "dmg_ak47", "1.5");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_leader", "dmg_deagle", "2.0");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_leader", "bpammo", "2.0");
