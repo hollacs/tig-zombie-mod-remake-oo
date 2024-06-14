@@ -4,10 +4,12 @@
 #include <fakemeta>
 #include <xs>
 
-#define DEBUG
+//#define DEBUG
 #define MAX_SPAWNS 256
 
+#if defined DEBUG
 new sprite_beam;
+#endif
 
 new Float:g_NodeOrigin[MAX_SPAWNS][3];
 new Float:g_NodeAngle[MAX_SPAWNS][3];
@@ -23,7 +25,9 @@ new Float:cvar_distance;
 
 public plugin_precache()
 {
+#if defined DEBUG
 	sprite_beam = precache_model("sprites/laserbeam.spr");
+#endif
 }
 
 public plugin_init()
@@ -295,7 +299,7 @@ bool:CheckOriginIsDucking(Float:origin[3])
 	return true;
 }
 
-CreateBeamPoints(id, dest, Float:origin[3], 
+stock CreateBeamPoints(id, dest, Float:origin[3], 
 	Float:start_x, Float:start_y, Float:start_z, 
 	Float:end_x, Float:end_y, Float:end_z, 
 	sprite, startframe, framerate, life, width, noise, color[3], brightness, scroll)
