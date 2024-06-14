@@ -292,42 +292,40 @@ public Zombie@OnGiveDamage(inflictor, victim, &Float:damage, damagebits)
 	if (info_o == @null)
 		return HC_CONTINUE;
 
-	new Trie:cvars_t = any:oo_get(info_o, "cvars");
-	if ((1 <= attacker <= MaxClients) && inflictor == attacker && get_user_weapon(attacker) == CSW_KNIFE)
+	if (inflictor == attacker && get_user_weapon(attacker) == CSW_KNIFE && oo_playerclass_isa(victim, "Human"))
 	{
-		if (oo_playerclass_isa(victim, "Human"))
+		new Trie:cvars_t = any:oo_get(info_o, "cvars");
+
+		new pcvar;
+		if (TrieGetCell(cvars_t, "dmg_head", pcvar))
 		{
-			new pcvar;
-			if (TrieGetCell(cvars_t, "dmg_head", pcvar))
+			new hitgroup = get_member(victim, m_LastHitGroup);
+			if (hitgroup == HIT_HEAD)
 			{
-				new hitgroup = get_member(victim, m_LastHitGroup);
-				if (hitgroup == HIT_HEAD)
-				{
-					damage /= 4.0;
-					damage *= get_pcvar_float(pcvar);
-				}
-			}
-
-			new Float:armor = Float:get_entvar(victim, var_armorvalue);
-			new anim = get_entvar(attacker, var_weaponanim);
-			if (anim == KNIFE_STABHIT) // stab
-			{
-				if (armor <= 0.0)
-					oo_call(0, "VirusStatus@Add", victim, attacker, 1.0, 1.0, 10);
-			}
-			else
-			{
-				if (armor <= 0.0)
-					oo_call(0, "VirusStatus@Add", victim, attacker, 1.0, 1.0, 3);
-			}
-
-			if (TrieGetCell(cvars_t, "dmg", pcvar))
-			{
+				damage /= 4.0;
 				damage *= get_pcvar_float(pcvar);
 			}
-
-			SetHookChainArg(4, ATYPE_FLOAT, damage);
 		}
+
+		new Float:armor = Float:get_entvar(victim, var_armorvalue);
+		new anim = get_entvar(attacker, var_weaponanim);
+		if (anim == KNIFE_STABHIT) // stab
+		{
+			if (armor <= 0.0)
+				oo_call(0, "VirusStatus@Add", victim, attacker, 1.0, 1.0, 10);
+		}
+		else
+		{
+			if (armor <= 0.0)
+				oo_call(0, "VirusStatus@Add", victim, attacker, 1.0, 1.0, 3);
+		}
+
+		if (TrieGetCell(cvars_t, "dmg", pcvar))
+		{
+			damage *= get_pcvar_float(pcvar);
+		}
+
+		SetHookChainArg(4, ATYPE_FLOAT, damage);
 	}
 	return HC_CONTINUE;
 }
