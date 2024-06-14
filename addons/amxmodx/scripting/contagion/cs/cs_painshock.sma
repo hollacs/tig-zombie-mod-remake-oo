@@ -1,6 +1,7 @@
 #include <amxmodx>
 #include <amxmisc>
 #include <reapi>
+#include <hamsandwich>
 
 const WEAPONS_BITS = CSW_ALL_GUNS|(1 << CSW_KNIFE);
 
@@ -73,6 +74,7 @@ public native_painshock_set()
 {
 	new id = get_param(1);
 	g_PainShock[id] = get_param_f(2);
+	g_PainInterval[id] = get_gametime();
 }
 
 public Float:native_painshock_get()
@@ -111,7 +113,7 @@ public OnTakeDamage_Post(id, inflictor, attacker, Float:damage, damagebits)
 	if (get_member(id, m_iTeam) == get_member(attacker, m_iTeam))
 		return;
 
-	new weapon = get_user_weapon(attacker)
+	new weapon = get_user_weapon(attacker);
 	if (~WEAPONS_BITS & (1 << weapon))
 		return;
 
