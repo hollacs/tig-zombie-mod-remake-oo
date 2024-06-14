@@ -1,5 +1,6 @@
 #include <amxmodx>
 #include <reapi>
+#include <hamsandwich>
 #include <oo_player_class>
 #include <oo_player_status>
 #include <cs_painshock>
@@ -67,7 +68,7 @@ public RampageStatus@Ctor(player, Float:duration, Float:speed, Float:takedmg)
 	oo_set_arr(this, "render", render);
 
 	oo_call(this, "SetRendering");
-	SetFov(player, 100);
+	SetFov(player, 110);
 
 	RequestFrame("ResetMaxSpeed", player);
 }
