@@ -1,6 +1,6 @@
 #include <amxmodx>
 #include <reapi>
-#include <oo_player_class>
+#include <oo_class_human>
 
 new g_HasChosen[MAX_PLAYERS + 1];
 
@@ -61,7 +61,7 @@ public ShowWeaponMenu(id, slot)
 		if (slot == 3) // nades
 		{
 			rg_give_item(id, weapon_name);
-			return;
+			continue;
 		}
 
 		if (count == 0 && !str[0])
@@ -76,6 +76,12 @@ public ShowWeaponMenu(id, slot)
 		formatex(info, charsmax(info), "%s %s", class_name, weapon_name);
 		menu_additem(menu, name, info);
 		count++;
+	}
+
+	if (slot == 3)
+	{
+		menu_destroy(menu);
+		return;
 	}
 
 	menu_display(id, menu);
@@ -118,7 +124,7 @@ GiveWeapon(id, slot, const weapon_name[])
 	if (ent)
 	{
 		new weapon_id = rg_get_weapon_info(weapon_name, WI_ID);
-		new ammo = rg_get_iteminfo(ent, ItemInfo_iMaxAmmo1);
+		new ammo = oo_human_get_max_bpammo(id, weapon_id);
 		rg_set_user_bpammo(id, any:weapon_id, ammo);
 	}
 }
