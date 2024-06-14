@@ -41,7 +41,7 @@ public UpdateHud(id)
 	oo_playerstatus_str(id, status, charsmax(status));
 
 	new color[3] = {0, 255, 0};
-	if (status[0] == 'C' || status[0] == 'I')
+	if (status[0] == 'C' || status[0] == 'I' || status[0] == 'S' || status[0] == 'B')
 		color = {255, 255, 0};
 	else if (status[0] == 'D')
 		color = {255, 10, 10};
