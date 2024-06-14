@@ -58,8 +58,8 @@ public plugin_init()
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "dmg", "1.15");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "knockback", "0.8");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "painshock", "0.9");
-	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "swing_speed", "2.0");
-	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "stab_speed", "1.5");
+	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "swing_speed", "1.75");
+	oo_call(g_oClassInfo, "CreateCvar", "ctg_boomer", "stab_speed", "1.25");
 
 	sprite_shockwave = AssetsGetSprite(g_oClassInfo, "shockwave");
 }
@@ -120,7 +120,7 @@ public Boomer@OnCmdStart(uc, seed)
 				if (!is_user_alive(i) || !oo_playerclass_isa(i, "Human"))
 					continue;
 				
-				if (entity_range(id, i) <= cvar_radius * 0.7)
+				if (entity_range(id, i) <= cvar_radius * 0.75)
 					near_count++;
 			}
 
@@ -297,7 +297,7 @@ public OnRestartRound()
 
 public ctg_OnGetPlayerSpawnSpot(id)
 {
-	if (!oo_playerclass_isa(id, "Zombie"))
+	if (!oo_playerclass_isa(id, "CommonInfected"))
 		return PLUGIN_CONTINUE;
 		
 	new spawn_ent[3], spawn_ent_num = 0;
