@@ -27,10 +27,10 @@ public ZombieItem@Ctor(const name[], const desc[], price)
 
 public ZombieItem@CanUse(id)
 {
-	return (is_user_alive(id) && oo_playerclass_isa(id, "Zombie"));
+	return (is_user_alive(id) && oo_playerclass_isa(id, "Zombie") && !oo_playerclass_isa(id, "Boss"));
 }
 
 public ZombieItem@CanShowInStoreMenu(id)
 {
-	return (is_user_alive(id) && oo_playerclass_isa(id, "Zombie"));
+	return (is_user_alive(id) && oo_playerclass_isa(id, "Zombie") && !oo_playerclass_isa(id, "Boss"));
 }
