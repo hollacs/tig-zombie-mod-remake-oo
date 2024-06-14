@@ -13,6 +13,8 @@ new PlayerClassInfo:g_oClassInfo;
 new Float:cvar_speed, Float:cvar_angle, Float:cvar_cooldown;
 new Float:cvar_painshock, Float:cvar_time, Float:cvar_radius, Float:cvar_damage;
 
+new bool:g_IsLeaping[MAX_PLAYERS + 1];
+
 public oo_init()
 {
 	oo_class("Hunter", "SpecialInfected");
@@ -24,6 +26,7 @@ public oo_init()
 		oo_var(cl, "has_attack", 1);
 		oo_var(cl, "notify", 1);
 
+		oo_dtor(cl, "Dtor");
 		oo_mthd(cl, "GetClassInfo");
 		oo_mthd(cl, "OnCmdStart", @int(uc), @int(seed));
 		oo_mthd(cl, "OnPainShock", @int(victim), @fl(damage), @ref(value));
@@ -43,14 +46,15 @@ public plugin_init()
 	register_plugin("[OO] Class: Hunter", "0.1", "holla");
 
 	register_touch("player", "player", "OnPlayerTouch");
+	RegisterHookChain(RG_PM_Move, "OnPmMove");
 
 	bind_pcvar_float(create_cvar("ctg_hunter_leap_cooldown", "5.0"), cvar_cooldown);
 	bind_pcvar_float(create_cvar("ctg_hunter_leap_speed", "500"), cvar_speed);
 	bind_pcvar_float(create_cvar("ctg_hunter_leap_angle", "-30"), cvar_angle);
-	bind_pcvar_float(create_cvar("ctg_hunter_pounch_painshock", "0.0"), cvar_painshock);
+	bind_pcvar_float(create_cvar("ctg_hunter_pounch_painshock", "1.0"), cvar_painshock);
 	bind_pcvar_float(create_cvar("ctg_hunter_pounch_time", "1.0"), cvar_time);
-	bind_pcvar_float(create_cvar("ctg_hunter_pounch_radius", "50.0"), cvar_radius);
-	bind_pcvar_float(create_cvar("ctg_hunter_touch_damage", "50.0"), cvar_damage);
+	bind_pcvar_float(create_cvar("ctg_hunter_pounch_radius", "64.0"), cvar_radius);
+	bind_pcvar_float(create_cvar("ctg_hunter_touch_damage", "40.0"), cvar_damage);
 
 	oo_call(g_oClassInfo, "CreateCvars");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_hunter", "health", "2000");
@@ -64,6 +68,17 @@ public plugin_init()
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_hunter", "swing_dist", "50.0");
 }
 
+public OnPmMove()
+{
+	new id = get_pmove(pm_player_index) + 1;
+	if (is_user_bot(id) && g_IsLeaping[id])
+	{
+		new ucmd = get_pmove(pm_cmd);
+		set_ucmd(ucmd, ucmd_forwardmove, 0.0);
+		set_ucmd(ucmd, ucmd_sidemove, 0.0);
+	}
+}
+
 public OnPlayerTouch(id, id2)
 {
 	new PlayerClass:class_o = oo_playerclass_get(id);
@@ -71,6 +86,11 @@ public OnPlayerTouch(id, id2)
 	{
 		oo_call(class_o, "OnTouchPlayer", id2)
 	}
+}
+
+public Hunter@Dtor()
+{
+	g_IsLeaping[oo_get(oo_this(), "player_id")] = false;
 }
 
 public Hunter@OnTouchPlayer(id2)
@@ -85,12 +105,13 @@ public Hunter@OnTouchPlayer(id2)
 
 	new Float:land_time = Float:oo_get(this, "land_time");
 	new Float:leap_time = Float:oo_get(this, "leap_time");
-	if (land_time == -1.0 && leap_time > 0.0 && gametime > leap_time + 5.0)
+	if (land_time != -1.0 || leap_time == 0.0 || gametime > leap_time + 5.0)
 		return PLUGIN_CONTINUE;
 
 	if (oo_get(this, "has_attack"))
 		return PLUGIN_CONTINUE;
 
+	set_member(id2, m_LastHitGroup, HIT_GENERIC);
 	ExecuteHamB(Ham_TakeDamage, id2, id, id, cvar_damage, DMG_BULLET|DMG_NEVERGIB);
 	oo_set(this, "has_attack", true);
 	client_print(0, print_chat, "hunter touch!!");
@@ -157,10 +178,11 @@ public Hunter@OnCmdStart(uc, seed)
 			get_entvar(id, var_origin, pos);
 			oo_set_arr(this, "land_pos", pos)
 			oo_set(this, "land_time", gametime);
+			g_IsLeaping[id] = false;
 		}
 	}
 
-	if (gametime >= Float:oo_get(this, "leap_time") + cvar_cooldown)
+	if (gametime >= Float:oo_get(this, "leap_time") + cvar_cooldown && (get_entvar(id, var_flags) & FL_ONGROUND))
 	{
 		if (!is_user_bot(id))
 		{
@@ -207,6 +229,7 @@ public Hunter@Leap()
 	oo_set(this, "leap_time", get_gametime());
 	oo_set(this, "land_time", -1.0);
 	oo_set(this, "has_attack", false);
+	g_IsLeaping[id] = true;
 
 	static sound[64];
 	if (AssetsGetRandomSound(g_oClassInfo, "leap", sound, charsmax(sound)))
