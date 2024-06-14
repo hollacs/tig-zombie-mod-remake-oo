@@ -20,7 +20,15 @@ public oo_init()
 public HealthStatus@GetName(output[], len)
 {
 	new id = oo_get(@this, "player_id");
-	if (oo_playerclass_isa(id, "Zombie"))
+	if (oo_playerclass_isa(id, "Boss"))
+	{
+		return formatex(output, len, "B.O.W.");
+	}
+	else if (oo_playerclass_isa(id, "SpecialInfected"))
+	{
+		return formatex(output, len, "Special Infected");
+	}
+	else if (oo_playerclass_isa(id, "Zombie"))
 	{
 		return formatex(output, len, "Infected");
 	}
