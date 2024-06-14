@@ -50,7 +50,6 @@ public plugin_init()
 	g_Forward[FW_CHANGE_CLASS_POST] = CreateMultiForward("OO_OnPlayerClassChange_Post", ET_IGNORE, FP_CELL, FP_STRING, FP_CELL);
 }
 
-
 public oo_init()
 {
 	oo_class("PlayerClassInfo", "Assets")
@@ -94,6 +93,8 @@ public oo_init()
 		oo_mthd(cl, "OnSpawn");
 		oo_mthd(cl, "OnTakeDamage", @int(inflictor), @int(attacker), @ref(damage), @int(damagebits));
 		oo_mthd(cl, "OnGiveDamage", @int(inflictor), @int(victim), @ref(damage), @int(damagebits));
+		oo_mthd(cl, "OnTraceAttack", @int(victim), @ref(damage), @arr(dir[3]), @int(tr), @int(damagebits));
+		oo_mthd(cl, "OnTraceAttack_Post", @int(victim), @fl(damage), @arr(dir[3]), @int(tr), @int(damagebits));
 		oo_mthd(cl, "OnKilled", @int(victim), @int(shouldgibs));
 		oo_mthd(cl, "OnKilledBy", @int(attacker), @int(shouldgibs));
 		oo_mthd(cl, "OnThink");
@@ -491,6 +492,8 @@ public PlayerClass@OnSpawn()
 
 public PlayerClass@OnTakeDamage(inflictor, attacker, &Float:damage, damagebits) {}
 public PlayerClass@OnGiveDamage(inflictor, victim, &Float:damage, damagebits) {}
+public PlayerClass@OnTraceAttack(victim, &Float:damage, Float:dir[3], tr, damagebits) {}
+public PlayerClass@OnTraceAttack_Post(victim, Float:damage, Float:dir[3], tr, damagebits) {}
 public PlayerClass@OnKilled(victim, shouldgibs) {}
 public PlayerClass@OnKilledBy(attacker, shouldgibs) {}
 public PlayerClass@OnThink() {}
@@ -558,18 +561,21 @@ public native_change()
 	static class_name[32];
 	get_string(2, class_name, charsmax(class_name));
 
-	if (!oo_class_exists(class_name))
+	if (class_name[0])
 	{
-		log_error(AMX_ERR_NATIVE, "class (%s) does not exists", class_name);
-		return @null;
-	}
+		if (!oo_class_exists(class_name))
+		{
+			log_error(AMX_ERR_NATIVE, "class (%s) does not exists", class_name);
+			return @null;
+		}
 
-	if (!oo_subclass_of(class_name, "PlayerClass"))
-	{
-		log_error(AMX_ERR_NATIVE, "Class (%s) not a subclass of (PlayerClass)", class_name);
-		return @null;
+		if (!oo_subclass_of(class_name, "PlayerClass"))
+		{
+			log_error(AMX_ERR_NATIVE, "Class (%s) not a subclass of (PlayerClass)", class_name);
+			return @null;
+		}
 	}
-
+	
 	return ChangePlayerClass(id, class_name, bool:get_param(3));
 }
 
@@ -629,6 +635,26 @@ public OO_OnPlayerTakeDamage(id, inflictor, attacker, Float:damage, damagebits)
 
 	result = (result2 > result) ? result2 : result;
 	return result;
+}
+
+public OO_OnPlayerTraceAttack(id, attacker, Float:damage, Float:dir[3], tr, damagebits)
+{
+	if (1 <= attacker <= MaxClients)
+	{
+		if (g_oPlayerClass[attacker] != @null)
+			return oo_call(g_oPlayerClass[attacker], "OnTraceAttack", id, damage, dir, tr, damagebits);
+	}
+
+	return HC_CONTINUE;
+}
+
+public OO_OnPlayerTraceAttack_Post(id, attacker, Float:damage, Float:dir[3], tr, damagebits)
+{
+	if (1 <= attacker <= MaxClients)
+	{
+		if (g_oPlayerClass[attacker] != @null)
+			oo_call(g_oPlayerClass[attacker], "OnTraceAttack_Post", id, damage, dir, tr, damagebits);
+	}
 }
 
 public OO_OnPlayerResetMaxSpeed(id)
