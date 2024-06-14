@@ -19,7 +19,6 @@ public plugin_init()
 	RegisterHookChain(RG_HandleMenu_ChooseTeam, "OnChooseTeam_Post", 1);
 	RegisterHookChain(RG_CBasePlayer_Spawn, "OnPlayerSpawn_Post", 1);
 	RegisterHookChain(RG_CBasePlayer_Killed, "OnPlayerKilled_Post", 1);
-	RegisterHookChain(RG_CBasePlayer_TakeDamage, "OnPlayerTakeDamage");
 	RegisterHookChain(RG_CSGameRules_CheckWinConditions, "OnCheckWinConditions");
 	RegisterHookChain(RG_CSGameRules_RestartRound, "OnRestartRound");
 	RegisterHookChain(RG_CSGameRules_RestartRound, "OnRestartRound_Post", 1);
@@ -27,6 +26,7 @@ public plugin_init()
 	RegisterHookChain(RG_CSGameRules_OnRoundFreezeEnd, "OnRoundFreezeEnd");
 	RegisterHookChain(RG_CBasePlayer_GiveDefaultItems, "OnGiveDefaultItems");
 	RegisterHookChain(RG_RoundEnd, "OnRoundEnd");
+	RegisterHookChain(RG_CBasePlayer_TakeDamage, "OnPlayerTakeDamage");
 
 	RegisterHam(Ham_Touch, "weaponbox", "OnWeaponBoxTouch");
 	RegisterHam(Ham_Touch, "armoury_entity", "OnArmouryTouch");
@@ -226,6 +226,8 @@ public OnRoundFreezeEnd()
 
 public OnRoundEnd(WinStatus:status, ScenarioEventEndRound:event, Float:tmDelay)
 {
+	server_print("round end");
+
 	if (g_oCurrentMode != @null)
 		oo_call(g_oCurrentMode, "OnRoundEnd", status, event, tmDelay);
 }

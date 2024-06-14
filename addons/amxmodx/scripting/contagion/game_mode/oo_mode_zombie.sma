@@ -63,6 +63,7 @@ public oo_init()
 
 		oo_mthd(cl, "OnThink");
 		oo_mthd(cl, "OnRestartRound");
+		oo_mthd(cl, "OnRoundFreezeEnd");
 		oo_mthd(cl, "OnRoundTimeExpired");
 		oo_mthd(cl, "OnRoundEnd", @int(status), @int(event), @fl(delay));
 		oo_mthd(cl, "OnChooseTeam", @int(player), @int(slot));
@@ -100,7 +101,7 @@ public plugin_init()
 
 	pcvar = create_cvar("ctg_gamemode_lights", "c");
 	bind_pcvar_string(pcvar, cvar_lights, charsmax(cvar_lights));
-	hook_cvar_change(pcvar, "Oncvar_lights");
+	hook_cvar_change(pcvar, "OnCvarLights");
 
 	pcvar = create_cvar("ctg_money_damage", "10");
 	bind_pcvar_num(pcvar, cvar_money_damage);
@@ -185,7 +186,7 @@ public Message_SendAudio(msgid, msgdest, id)
 	return PLUGIN_CONTINUE;
 }
 
-public Oncvar_lights(pcvar, const old_value[], const new_value[])
+public OnCvarLights(pcvar, const old_value[], const new_value[])
 {
 	new GameMode:mode_o = oo_gamemode_get();
 	if (mode_o == @null || !oo_isa(mode_o, "ZombieMode", true))
@@ -302,7 +303,7 @@ public ZombieMode@Start()
 	if (AssetsGetRandomGeneric(g_oAssets, "game_start", sound, charsmax(sound)))
 		client_cmd(0, "spk ^"%s^"", sound);
 
-	oo_set(this, "next_special_infected", get_gametime() + random_float(30.0, 60.0));
+	oo_set(this, "next_special_infected", get_gametime() + random_float(20.0, 60.0));
 	oo_set(this, "special_infected_count", 0);
 
 	oo_set(this, "next_boss", get_gametime() + (float(get_member_game(m_iRoundTimeSecs)) * 0.333333) - 20.0 + random_float(-20.0, 20.0));
@@ -314,13 +315,15 @@ public ZombieMode@Start()
 
 public ZombieMode@End()
 {
+	server_print("end");
 	remove_task(TASK_BGM);
+	client_cmd(0, "mp3 stop");
 }
 
 public ZombieMode@OnRoundEnd(WinStatus:win, ScenarioEventEndRound:event, Float:tmDelay)
 {
 	new this = oo_this();
-	oo_call(this, "GameMode@OnRoundEnd", win, event, tmDelay);
+	oo_call(this, "End");
 
 	switch (win)
 	{
@@ -372,9 +375,9 @@ public ZombieMode@CheckWinConditions()
 		{
 			if (is_user_alive(i))
 			{
-				if (oo_playerclass_isa(i, "Human", true))
+				if (oo_playerclass_isa(i, "Human"))
 					human_count++;
-				else if (oo_playerclass_isa(i, "Zombie", true))
+				else if (oo_playerclass_isa(i, "Zombie"))
 					zombie_count++;
 			}
 			spawnable_count++;
@@ -390,6 +393,20 @@ public ZombieMode@CheckWinConditions()
 
 		static sound[64];
 		if (AssetsGetRandomGeneric(g_oAssets, "zombies_win", sound, charsmax(sound)))
+			client_cmd(0, "spk ^"%s^"", sound);
+
+		return true;
+	}
+
+	if (spawnable_count > 1 && zombie_count < 1 && human_count > 0 && oo_get(this, "boss_dead"))
+	{
+		rg_round_end(5.0, WINSTATUS_CTS, ROUND_CTS_WIN, "Humans Win");
+
+		set_dhudmessage(0, 255, 0, -1.0, 0.2, 0, 0.0, 3.0, 1.0, 1.0);
+		show_dhudmessage(0, "Humans Win");
+
+		static sound[64];
+		if (AssetsGetRandomGeneric(g_oAssets, "survivors_win", sound, charsmax(sound)))
 			client_cmd(0, "spk ^"%s^"", sound);
 
 		return true;
@@ -506,8 +523,11 @@ public ZombieMode@OnPlayerRespawn(id)
 	if (oo_get(this, "is_started"))
 	{
 		new Float:gametime = get_gametime();
-		/*if (gametime >= Float:oo_get(this, "next_boss") && !oo_get(this, "has_boss"))
+		if (gametime >= Float:oo_get(this, "next_boss") && !oo_get(this, "has_boss"))
 		{
+			if (is_user_bot(id) && gametime < Float:oo_get(this, "next_boss") + 20.0)
+				goto RespawnAsZombie;
+
 			set_dhudmessage(255, 10, 10, -1.0, 0.3, 1, 0.0, 3.0, 0.0, 1.0);
 			show_dhudmessage(0, "Nemesis Detected !!");
 
@@ -523,10 +543,28 @@ public ZombieMode@OnPlayerRespawn(id)
 			oo_playerclass_change(id, "Nemesis", false);
 			oo_set(this, "has_boss", true);
 		}
-		else */if (gametime >= Float:oo_get(this, "next_special_infected") && oo_get(this, "special_infected_count") < 3)
+		else if (gametime >= Float:oo_get(this, "next_special_infected") && oo_get(this, "special_infected_count") < 3)
 		{
+			if (is_user_bot(id) && gametime < Float:oo_get(this, "next_special_infected") + 20.0)
+				goto RespawnAsZombie;
+
+			static const CLASSES[3][] = {"Spitter", "Boomer", "Hunter"};
+
+			static classes[3];
+			new num_classes = 0;
+			for (new i = 0; i < sizeof CLASSES; i++)
+			{
+				if (oo_playerclass_count(CLASSES[i]) < 1)
+					classes[num_classes++] = i;
+			}
+
+			if (num_classes < 1)
+				goto RespawnAsZombie;
+
+			new index = classes[random(num_classes)];
+
 			set_dhudmessage(0, 75, 200, -1.0, 0.3, 1, 0.0, 3.0, 0.0, 1.0);
-			show_dhudmessage(0, "Boomer Detected !!");
+			show_dhudmessage(0, "%s Detected !!", CLASSES[index]);
 
 			static sound[64];
 			if (AssetsGetRandomGeneric(g_oAssets, "klaxon", sound, charsmax(sound)))
@@ -535,12 +573,13 @@ public ZombieMode@OnPlayerRespawn(id)
 			}
 
 			oo_set(this, "special_infected_count", oo_get(this, "special_infected_count") + 1);
-			oo_set(this, "next_special_infected", gametime + random_float(60.0, 120.0));
+			oo_set(this, "next_special_infected", gametime + random_float(30.0, 100.0));
 
-			oo_playerclass_change(id, "Boomer", false);
+			oo_playerclass_change(id, CLASSES[index], false);
 		}
 		else
 		{
+		RespawnAsZombie:
 			oo_playerclass_change(id, "Zombie", false);
 		}
 	}
@@ -624,13 +663,49 @@ public ZombieMode@OnRestartRound()
 
 	for (new i = 1; i <= MaxClients; i++)
 	{
-		if (!is_user_connected(i))
+		if (!is_user_connected(i) || !(TEAM_TERRORIST <= TeamName:get_member(i, m_iTeam) <= TEAM_CT))
 			continue;
 		
 		oo_playerclass_change(i, "Human", false);
 	}
 
 	client_cmd(0, "mp3 stop");
+	remove_task(TASK_BGM);
+}
+
+public ZombieMode@OnRoundFreezeEnd()
+{
+	static players[32], players_real[32];
+	new num_players = 0;
+	new num_reals = 0;
+
+	for (new i = 1; i <= MaxClients; i++)
+	{
+		if (!is_user_alive(i))
+			continue;
+		
+		players[num_players++] = i;
+
+		if (!is_user_bot(i))
+			players_real[num_reals++] = i;
+	}
+
+	new player = 0;
+	if (num_players >= 2)
+	{
+		if (num_reals > 0)
+			player = players_real[random(num_reals)];
+		else
+			player = players[random(num_players)];
+	}
+
+	if (player)
+	{
+		oo_playerclass_change(player, "Leader", true);
+
+		set_dhudmessage(0, 100, 255, 0.01, 0.35, 0, 0.0, 3.0, 0.0, 1.0);
+		show_dhudmessage(0, "%n 被選中成為 Leader", player);
+	}
 }
 
 public ZombieMode@OnChooseTeam(id, MenuChooseTeam:slot)
