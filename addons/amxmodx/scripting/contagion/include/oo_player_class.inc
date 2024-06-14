@@ -31,6 +31,22 @@ stock any:oo_playerclass_get_info(id)
 	return oo_call(class_o, "GetClassInfo");
 }
 
+stock oo_playerclass_pcvar(id, const cvar[])
+{
+	new PlayerClass:class_o = oo_playerclass_get(id);
+	if (class_o == @null) return 0;
+
+	return oo_call(class_o, "GetCvarPtr", cvar);
+}
+
+stock oo_playerclass_set_props(id, bool:set_team=true)
+{
+	new PlayerClass:class_o = oo_playerclass_get(id);
+	if (class_o == @null) return 0;
+
+	return oo_call(class_o, "SetProperties", set_team);
+}
+
 stock oo_playerclass_count(const class[], bool:alive=true, bool:super=true)
 {
 	new count = 0;
