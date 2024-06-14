@@ -3,6 +3,7 @@
 #include <hamsandwich>
 #include <oo>
 #include <oo_player_class>
+#include <oo_class_human>
 
 new Store:g_oStore;
 new cvar_ammo_price;
@@ -147,7 +148,7 @@ bool:BuyWeaponAmmo(id, slot)
 
 				if (ExecuteHamB(Ham_GiveAmmo, id, 
 					rg_get_weapon_info(weapon_id, WI_BUY_CLIP_SIZE), ammo_name, 
-					rg_get_iteminfo(item_ent, ItemInfo_iMaxAmmo1)))
+					oo_human_get_max_bpammo(id, weapon_id)))
 				{
 					if (get_member(id, m_rgAmmo, ammo_type) > ammo)
 					{

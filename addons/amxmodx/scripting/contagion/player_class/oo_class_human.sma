@@ -3,6 +3,7 @@
 #include <hamsandwich>
 #include <oo_player_class>
 #include <cs_painshock>
+#include <xs>
 
 new PlayerClassInfo:g_oClassInfo;
 
@@ -42,7 +43,11 @@ public oo_init()
 		oo_mthd(cl, "GetClassInfo");
 		oo_mthd(cl, "SetTeam");
 		oo_mthd(cl, "GetArmorDefense");
-		oo_mthd(cl, "OnTakeDamage", @int(inflictor), @int(attacker), @ref(damage), @int(damagebits));
+		oo_mthd(cl, "CanKnifeKnockBack", @cell, @cell);
+		oo_mthd(cl, "GetWeaponMaxBpAmmo", @cell);
+		oo_mthd(cl, "OnTakeDamage", @cell, @cell, @byref, @cell);
+		oo_mthd(cl, "OnGiveDamage", @cell, @cell, @byref, @cell);
+		oo_mthd(cl, "OnTraceAttack_Post", @cell, @float, @array[3], @cell, @cell);
 		oo_mthd(cl, "OnPainShock", @cell, @float, @byref);
 		oo_mthd(cl, "OnKnifeAttack1", @cell);
 		oo_mthd(cl, "OnKnifeAttack2", @cell);
@@ -68,9 +73,15 @@ public HumanClassInfo@CreateCvars()
 	oo_call(this, "CreateCvar", "ctg_human", "swing_dmg", "15");
 	oo_call(this, "CreateCvar", "ctg_human", "swing2_dmg", "20");
 	oo_call(this, "CreateCvar", "ctg_human", "swing_dist", "48");
+	oo_call(this, "CreateCvar", "ctg_human", "swing_knockback", "0");
 	oo_call(this, "CreateCvar", "ctg_human", "stab_dmg", "65");
 	oo_call(this, "CreateCvar", "ctg_human", "stab_dist", "32");
+	oo_call(this, "CreateCvar", "ctg_human", "stab_knockback", "800");
 	oo_call(this, "CreateCvar", "ctg_human", "backstab_dmg", "3.0");
+	oo_call(this, "CreateCvar", "ctg_human", "bpammo", "1.0");
+	oo_call(this, "CreateCvar", "ctg_human", "bpammo_hegrenade", "2");
+	oo_call(this, "CreateCvar", "ctg_human", "bpammo_flashbang", "2");
+	oo_call(this, "CreateCvar", "ctg_human", "bpammo_smokegrenade", "1");
 }
 
 public Human@Ctor(player)
@@ -102,6 +113,77 @@ public Float:Human@GetArmorDefense()
 		return get_pcvar_float(pcvar);
 
 	return 1.0;
+}
+
+public Human@GetWeaponMaxBpAmmo(weapon)
+{
+	new this = oo_this();
+
+	static weapon_name[32], cvar_name[32];
+	rg_get_weapon_info(weapon, WI_NAME, weapon_name[7], charsmax(weapon_name)-7);
+	formatex(cvar_name, charsmax(cvar_name), "bpammo_%s", weapon_name);
+
+	new pcvar = oo_call(this, "GetCvarPtr", cvar_name);
+	if (pcvar)
+		return get_pcvar_num(pcvar);
+	
+	new max_ammo = rg_get_global_iteminfo(weapon, ItemInfo_iMaxAmmo1);
+
+	pcvar = oo_call(this, "GetCvarPtr", "bpammo");
+	if (pcvar)
+		return floatround(max_ammo * get_pcvar_float(pcvar));
+
+	return max_ammo;
+}
+
+public Float:Human@GetWeaponDamage(weapon)
+{
+	new this = oo_this();
+
+	static weapon_name[32], cvar_name[32];
+	rg_get_weapon_info(weapon, WI_NAME, weapon_name[7], charsmax(weapon_name)-7);
+	formatex(cvar_name, charsmax(cvar_name), "dmg_%s", weapon_name);
+
+	new pcvar = oo_call(this, "GetCvarPtr", cvar_name);
+	if (pcvar)
+		return get_pcvar_float(pcvar);
+
+	switch (weapon)
+	{
+		case CSW_GLOCK18, CSW_USP, CSW_P228, CSW_DEAGLE, CSW_FIVESEVEN, CSW_ELITE:
+			pcvar = oo_call(this, "GetCvarPtr", "dmg_pistol");
+		
+		case CSW_M3, CSW_XM1014:
+			pcvar = oo_call(this, "GetCvarPtr", "dmg_shotgun");
+
+		case CSW_MAC10, CSW_TMP, CSW_MP5NAVY, CSW_UMP45, CSW_P90:
+			pcvar = oo_call(this, "GetCvarPtr", "dmg_smg");
+
+		case CSW_GALIL, CSW_FAMAS, CSW_AK47, CSW_M4A1, CSW_SG552, CSW_AUG:
+			pcvar = oo_call(this, "GetCvarPtr", "dmg_rifle");
+
+		case CSW_SCOUT, CSW_AWP, CSW_G3SG1, CSW_SG550:
+			pcvar = oo_call(this, "GetCvarPtr", "dmg_sniper");
+
+		case CSW_M249:
+			pcvar = oo_call(this, "GetCvarPtr", "dmg_machine");
+	}
+
+	if (pcvar)
+		return get_pcvar_float(pcvar);
+	
+	return 1.0;
+}
+
+public Human@OnGiveDamage(inflictor, victim, &Float:damage, damagebits)
+{
+	new this = oo_this();
+	new attacker = oo_get(this, "player_id");
+
+	if (inflictor == attacker && (damagebits & DMG_BULLET) && oo_playerclass_isa(victim, "Zombie"))
+	{
+		
+	}
 }
 
 public Human@OnTakeDamage(inflictor, attacker, &Float:damage, damagebits)
@@ -153,6 +235,61 @@ public Human@OnTakeDamage(inflictor, attacker, &Float:damage, damagebits)
 	return HC_CONTINUE;
 }
 
+public Human@CanKnifeKnockBack(victim, bool:is_stab)
+{
+	if (oo_playerclass_isa(victim, "Boss") || oo_playerclass_isa(victim, "SpecialInfected"))
+		return false;
+	
+	return true;
+}
+
+public Human@OnTraceAttack_Post(victim, Float:damage, Float:dir[3], tr, damagebits)
+{
+	if (~damagebits & DMG_BULLET)
+		return HC_CONTINUE;
+
+	if (!oo_playerclass_isa(victim, "Zombie"))
+		return HC_CONTINUE;
+
+	new this = oo_this();
+	new attacker = oo_get(this, "player_id");
+	
+	if (get_user_weapon(attacker) == CSW_KNIFE)
+	{
+		static const KNIFE_STABHIT = 4;
+
+		new anim = get_entvar(attacker, var_weaponanim);
+		new bool:is_stab = bool:(anim == KNIFE_STABHIT);
+
+		if (!oo_call(this, "CanKnifeKnockBack", victim, is_stab))
+			return HC_CONTINUE;
+
+		new pcvar;
+		if (is_stab)
+			pcvar = oo_call(this, "GetCvarPtr", "stab_knockback");
+		else
+			pcvar = oo_call(this, "GetCvarPtr", "swing_knockback");
+
+		if (pcvar)
+		{
+			static Float:angle[3], Float:vec[3];
+			vector_to_angle(dir, angle);
+			angle[0] = 0.0;
+			angle_vector(angle, ANGLEVECTOR_FORWARD, vec);
+			xs_vec_mul_scalar(vec, get_pcvar_float(pcvar), vec);
+
+			static Float:velocity[3];
+			get_entvar(victim, var_velocity, velocity);
+			xs_vec_add(velocity, vec, velocity);
+			set_entvar(victim, var_velocity, velocity);
+
+			server_print("%f %f %f (%f)", dir[0], dir[1], dir[2], get_pcvar_float(pcvar));
+		}
+	}
+
+	return HC_CONTINUE;
+}
+
 public Human@OnPainShock(attacker, Float:damage, &Float:value)
 {
 	new this = oo_this();
@@ -173,7 +310,6 @@ public Human@OnPainShock(attacker, Float:damage, &Float:value)
 		}
 	}
 }
-
 
 public Human@OnKnifeAttack1(ent)
 {
