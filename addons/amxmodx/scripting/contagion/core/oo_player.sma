@@ -1,5 +1,6 @@
 #include <amxmodx>
 #include <reapi>
+#include <hamsandwich>
 #include <oo>
 
 enum _:Forward_e
@@ -10,6 +11,8 @@ enum _:Forward_e
 	FW_SPAWN,
 	FW_PRETHINK,
 	FW_TAKEDAMAGE,
+	FW_TRACEATTACK,
+	FW_TRACEATTACK_POST,
 	FW_KILLED,
 	FW_RESETMAXSPEED,
 	FW_RESPAWN,
@@ -33,15 +36,19 @@ public plugin_init()
 
 	RegisterHookChain(RG_CBasePlayer_Spawn, 		"OnPlayerSpawn_Post", 1);
 	RegisterHookChain(RG_CBasePlayer_PreThink, 		"OnPlayerPreThink");
-	RegisterHookChain(RG_CBasePlayer_TakeDamage, 	"OnPlayerTakeDamage");
 	RegisterHookChain(RG_CBasePlayer_Killed, 		"OnPlayerKilled");
 	RegisterHookChain(RG_CBasePlayer_ResetMaxSpeed, "OnPlayerResetMaxSpeed_Post", 1);
+	RegisterHookChain(RG_CBasePlayer_TakeDamage, 	"OnPlayerTakeDamage");
+	RegisterHookChain(RG_CBasePlayer_TraceAttack, 	"OnPlayerTraceAttack");
+	RegisterHookChain(RG_CBasePlayer_TraceAttack, 	"OnPlayerTraceAttack_Post", 1);
 
 	g_Forward[FW_ALLOCATE] 		= CreateMultiForward("OO_OnPlayerAllocate", ET_CONTINUE, FP_CELL);
 	g_Forward[FW_CTOR] 			= CreateMultiForward("OO_OnPlayerCtor", ET_IGNORE, FP_CELL);
 	g_Forward[FW_DTOR] 			= CreateMultiForward("OO_OnPlayerDtor", ET_IGNORE, FP_CELL);
 	g_Forward[FW_SPAWN] 		= CreateMultiForward("OO_OnPlayerSpawn", ET_IGNORE, FP_CELL);
 	g_Forward[FW_TAKEDAMAGE]	= CreateMultiForward("OO_OnPlayerTakeDamage", ET_CONTINUE, FP_CELL, FP_CELL, FP_CELL, FP_FLOAT, FP_CELL);
+	g_Forward[FW_TRACEATTACK]	= CreateMultiForward("OO_OnPlayerTraceAttack", ET_CONTINUE, FP_CELL, FP_CELL, FP_FLOAT, FP_ARRAY, FP_CELL, FP_CELL);
+	g_Forward[FW_TRACEATTACK_POST]	= CreateMultiForward("OO_OnPlayerTraceAttack_Post", ET_IGNORE, FP_CELL, FP_CELL, FP_FLOAT, FP_ARRAY, FP_CELL, FP_CELL);
 	g_Forward[FW_PRETHINK] 		= CreateMultiForward("OO_OnPlayerPreThink", ET_CONTINUE, FP_CELL);
 	g_Forward[FW_KILLED] 		= CreateMultiForward("OO_OnPlayerKilled", ET_CONTINUE, FP_CELL, FP_CELL, FP_CELL);
 	g_Forward[FW_RESETMAXSPEED] = CreateMultiForward("OO_OnPlayerResetMaxSpeed", ET_CONTINUE, FP_CELL);
@@ -65,6 +72,8 @@ public oo_init()
 		oo_mthd(cl, "OnPreThink");
 		oo_mthd(cl, "OnSpawn");
 		oo_mthd(cl, "OnTakeDamage", @int(inflictor), @int(attacker), @fl(damage), @int(damagebits));
+		oo_mthd(cl, "OnTraceAttack", @int(attacker), @fl(damage), @arr(dir[3]), @int(tr), @int(damagebits));
+		oo_mthd(cl, "OnTraceAttack_Post", @int(attacker), @fl(damage), @arr(dir[3]), @int(tr), @int(damagebits));
 		oo_mthd(cl, "OnKilled", @int(killer), @int(shouldgib));
 		oo_mthd(cl, "OnResetMaxSpeed");
 
@@ -112,6 +121,21 @@ public Player@OnTakeDamage(inflictor, attacker, Float:damage, damagebits)
 	new id = oo_get(oo_this(), "player_id");
 	ExecuteForward(g_Forward[FW_TAKEDAMAGE], g_ForwardResult, id, inflictor, attacker, damage, damagebits);
 	return g_ForwardResult;
+}
+
+public Player@OnTraceAttack(attacker, Float:damage, Float:dir[3], tr, damagebits)
+{
+	new victim = oo_get(oo_this(), "player_id");
+	new arr = PrepareArray(_:dir, sizeof dir, 1);
+	ExecuteForward(g_Forward[FW_TRACEATTACK], g_ForwardResult, victim, attacker, damage, arr, tr, damagebits);
+	return g_ForwardResult;
+}
+
+public Player@OnTraceAttack_Post(attacker, Float:damage, Float:dir[3], tr, damagebits)
+{
+	new victim = oo_get(oo_this(), "player_id");
+	new arr = PrepareArray(_:dir, sizeof dir, 1);
+	ExecuteForward(g_Forward[FW_TRACEATTACK_POST], g_ForwardResult, victim, attacker, damage, arr, tr, damagebits);
 }
 
 public Player@OnKilled(attacker, shouldgibs)
@@ -270,6 +294,20 @@ public OnPlayerResetMaxSpeed_Post(id)
 {
 	if (g_oPlayer[id] != @null)
 		oo_call(g_oPlayer[id], "OnResetMaxSpeed");
+}
+
+public OnPlayerTraceAttack(id, attacker, Float:damage, Float:dir[3], tr, damagebits)
+{
+	if (g_oPlayer[id] != @null)
+		return oo_call(g_oPlayer[id], "OnTraceAttack", attacker, damage, dir, tr, damagebits);
+
+	return HC_CONTINUE;
+}
+
+public OnPlayerTraceAttack_Post(id, attacker, Float:damage, Float:dir[3], tr, damagebits)
+{
+	if (g_oPlayer[id] != @null)
+		oo_call(g_oPlayer[id], "OnTraceAttack_Post", attacker, damage, dir, tr, damagebits);
 }
 
 public RespawnPlayer(taskid)
