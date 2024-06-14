@@ -1,5 +1,6 @@
 #include <amxmodx>
 #include <reapi>
+#include <cstrike>
 #include <hamsandwich>
 #include <oo_player_class>
 #include <cs_painshock>
@@ -45,6 +46,7 @@ public oo_init()
 		oo_mthd(cl, "GetArmorDefense");
 		oo_mthd(cl, "CanKnifeKnockBack", @cell, @cell);
 		oo_mthd(cl, "GetWeaponMaxBpAmmo", @cell);
+		oo_mthd(cl, "GetWeaponDamage", @cell);
 		oo_mthd(cl, "OnTakeDamage", @cell, @cell, @byref, @cell);
 		oo_mthd(cl, "OnGiveDamage", @cell, @cell, @byref, @cell);
 		oo_mthd(cl, "OnTraceAttack_Post", @cell, @float, @array[3], @cell, @cell);
@@ -120,8 +122,8 @@ public Human@GetWeaponMaxBpAmmo(weapon)
 	new this = oo_this();
 
 	static weapon_name[32], cvar_name[32];
-	rg_get_weapon_info(weapon, WI_NAME, weapon_name[7], charsmax(weapon_name)-7);
-	formatex(cvar_name, charsmax(cvar_name), "bpammo_%s", weapon_name);
+	rg_get_weapon_info(weapon, WI_NAME, weapon_name, charsmax(weapon_name));
+	formatex(cvar_name, charsmax(cvar_name), "bpammo_%s", weapon_name[7]);
 
 	new pcvar = oo_call(this, "GetCvarPtr", cvar_name);
 	if (pcvar)
@@ -141,8 +143,8 @@ public Float:Human@GetWeaponDamage(weapon)
 	new this = oo_this();
 
 	static weapon_name[32], cvar_name[32];
-	rg_get_weapon_info(weapon, WI_NAME, weapon_name[7], charsmax(weapon_name)-7);
-	formatex(cvar_name, charsmax(cvar_name), "dmg_%s", weapon_name);
+	rg_get_weapon_info(weapon, WI_NAME, weapon_name, charsmax(weapon_name));
+	formatex(cvar_name, charsmax(cvar_name), "dmg_%s", weapon_name[7]);
 
 	new pcvar = oo_call(this, "GetCvarPtr", cvar_name);
 	if (pcvar)
@@ -182,8 +184,16 @@ public Human@OnGiveDamage(inflictor, victim, &Float:damage, damagebits)
 
 	if (inflictor == attacker && (damagebits & DMG_BULLET) && oo_playerclass_isa(victim, "Zombie"))
 	{
-		
+		new weapon = get_user_weapon(attacker);
+		if (CSW_ALL_GUNS & (1 << weapon))
+		{
+			new Float:mul = Float:oo_call(this, "GetWeaponDamage", weapon);
+			damage *= mul;
+			SetHookChainArg(4, ATYPE_FLOAT, damage);
+		}
 	}
+
+	return HC_CONTINUE;
 }
 
 public Human@OnTakeDamage(inflictor, attacker, &Float:damage, damagebits)
@@ -282,8 +292,6 @@ public Human@OnTraceAttack_Post(victim, Float:damage, Float:dir[3], tr, damagebi
 			get_entvar(victim, var_velocity, velocity);
 			xs_vec_add(velocity, vec, velocity);
 			set_entvar(victim, var_velocity, velocity);
-
-			server_print("%f %f %f (%f)", dir[0], dir[1], dir[2], get_pcvar_float(pcvar));
 		}
 	}
 
