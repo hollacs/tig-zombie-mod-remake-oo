@@ -6,6 +6,6 @@
 		"klaxon": ["sound/tig_test/klaxon1.wav"],
 		"boss_detected": ["sound/tig_test/boss_detected.wav"],
 		"boss_death": ["sound/tig_test/boss_death.wav"],
-		"nemesis_bgm": ["sound/tig_test/nemesis_bgm.mp3"]
+		"nemesis_bgm": ["sound/tig_test/Laboratory.mp3"]
 	}
 } 
