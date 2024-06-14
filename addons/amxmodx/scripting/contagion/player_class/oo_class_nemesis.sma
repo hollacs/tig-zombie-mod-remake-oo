@@ -47,7 +47,7 @@ public plugin_init()
 
 	bind_pcvar_float(create_cvar("ctg_nemesis_rocket_speed", "1250"), cvar_rocket_speed);
 	bind_pcvar_float(create_cvar("ctg_nemesis_rocket_radius", "250"), cvar_rocket_radius);
-	bind_pcvar_float(create_cvar("ctg_nemesis_rocket_min_dmg", "1"), cvar_rocket_mindmg);
+	bind_pcvar_float(create_cvar("ctg_nemesis_rocket_min_dmg", "10"), cvar_rocket_mindmg);
 	bind_pcvar_float(create_cvar("ctg_nemesis_rocket_max_dmg", "150"), cvar_rocket_maxdmg);
 	bind_pcvar_float(create_cvar("ctg_nemesis_rocket_reload_time", "30"), cvar_rocket_reload_time);
 
@@ -199,6 +199,9 @@ public Nemesis@OnCmdStart(uc, seed)
 	new this = oo_this()
 	new id = oo_get(this, "player_id");
 
+	if (!is_user_alive(id))
+		return;
+
 	if (get_user_weapon(id) == CSW_KNIFE)
 	{
 		if (oo_get(this, "rpg_reloaded"))
@@ -210,7 +213,7 @@ public Nemesis@OnCmdStart(uc, seed)
 				if (is_user_alive(aiming) && oo_playerclass_isa(aiming, "Human"))
 					oo_call(this, "RocketLaunch");
 			}
-			else if ((get_uc(uc, UC_Buttons) & IN_USE) && (~pev(id, pev_oldbuttons) & IN_USE))
+			else if ((get_uc(uc, UC_Buttons) & IN_RELOAD) && (~pev(id, pev_oldbuttons) & IN_RELOAD))
 				oo_call(this, "RocketLaunch");
 		}
 	}
@@ -260,9 +263,12 @@ public Nemesis@RocketLaunch()
 public Nemesis@OnThink()
 {
 	new this = oo_this();
-	//new id = oo_get(this, "player");
+	new id = oo_get(this, "player_id");
 
 	oo_call(this, "Zombie@OnThink");
+
+	if (!is_user_alive(id))
+		return;
 
 	if (!oo_get(this, "rpg_reloaded"))
 	{
