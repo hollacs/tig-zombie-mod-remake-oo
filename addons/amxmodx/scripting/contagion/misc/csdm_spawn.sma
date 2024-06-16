@@ -10,10 +10,11 @@ new Array:g_SpawnViewAngle;
 new g_SpawnCount;
 
 new g_fwGetPlayerSpawnSpot;
+new g_fwCheckSpawnSpot;
 
 public plugin_init()
 {
-	register_plugin("[CTG] CSDM Spawn", "0.1", "holla");
+	register_plugin("CSDM Spawn", "0.1", "holla");
 
 	RegisterHookChain(RG_CSGameRules_GetPlayerSpawnSpot, "OnGetPlayerSpawnSpot_Post", 1);
 
@@ -21,9 +22,29 @@ public plugin_init()
 	g_SpawnAngle = ArrayCreate(3);
 	g_SpawnViewAngle = ArrayCreate(3);
 
-	g_fwGetPlayerSpawnSpot = CreateMultiForward("ctg_OnGetPlayerSpawnSpot", ET_CONTINUE, FP_CELL);
+	g_fwGetPlayerSpawnSpot = CreateMultiForward("CSDM_OnGetPlayerSpawnSpot", ET_CONTINUE, FP_CELL);
+	g_fwCheckSpawnSpot = CreateMultiForward("CSDM_CheckSpawnSpot", ET_CONTINUE, FP_CELL, FP_ARRAY);
 
 	LoadSpawns();
+}
+
+public plugin_natives()
+{
+	register_library("csdm_spawn");
+
+	register_native("csdm_spawn", "native_spawn");
+}
+
+public native_spawn()
+{
+	new id = get_param(1);
+	if (!is_user_connected(id))
+	{
+		log_error(AMX_ERR_NATIVE, "Player (%d) not connected", id);
+		return;
+	}
+
+	DoCsdmSpawn(id);
 }
 
 public OnGetPlayerSpawnSpot_Post(id)
@@ -35,7 +56,14 @@ public OnGetPlayerSpawnSpot_Post(id)
 	ExecuteForward(g_fwGetPlayerSpawnSpot, ret, id);
 	if (ret == PLUGIN_HANDLED)
 		return;
-	
+
+	DoCsdmSpawn(id)
+}
+
+DoCsdmSpawn(id)
+{
+	new ret;
+	new arr;
 	new spawn_index = random(g_SpawnCount);
 	static Float:v[3];
 
@@ -47,15 +75,20 @@ public OnGetPlayerSpawnSpot_Post(id)
 
 		if (IsHullVacant(v, HULL_HUMAN))
 		{
-			entity_set_origin(id, v);
+			arr = PrepareArray(_:v, sizeof v);
+			ExecuteForward(g_fwCheckSpawnSpot, ret, id, arr);
+			if (ret < PLUGIN_HANDLED)
+			{
+				entity_set_origin(id, v);
 
-			ArrayGetArray(g_SpawnAngle, i, v);
-			set_entvar(id, var_angles, v);
+				ArrayGetArray(g_SpawnAngle, i, v);
+				set_entvar(id, var_angles, v);
 
-			ArrayGetArray(g_SpawnViewAngle, i, v);
-			set_entvar(id, var_v_angle, v);
+				ArrayGetArray(g_SpawnViewAngle, i, v);
+				set_entvar(id, var_v_angle, v);
 
-			break;
+				break;
+			}
 		}
 
 		if (i == spawn_index) break;
@@ -118,7 +151,7 @@ LoadSpawns()
 	}
 }
 
-IsHullVacant(Float:origin[3], hull)
+bool:IsHullVacant(Float:origin[3], hull)
 {
 	engfunc(EngFunc_TraceHull, origin, origin, 0, hull, 0, 0)
 	

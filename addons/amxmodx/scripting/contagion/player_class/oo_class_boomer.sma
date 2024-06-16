@@ -6,7 +6,7 @@
 #include <oo_player_class>
 #include <oo_assets>
 #include <cs_painshock>
-#include <ctg_csdm_spawn>
+#include <csdm_spawn>
 #include <walknode>
 #include <xs>
 
@@ -295,7 +295,7 @@ public OnRestartRound()
 	remove_entity_name("boomer_spawn");
 }
 
-public ctg_OnGetPlayerSpawnSpot(id)
+public CSDM_OnGetPlayerSpawnSpot(id)
 {
 	if (!oo_playerclass_isa(id, "CommonInfected"))
 		return PLUGIN_CONTINUE;
