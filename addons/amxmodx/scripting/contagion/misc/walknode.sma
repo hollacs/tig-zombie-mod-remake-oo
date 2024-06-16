@@ -5,7 +5,7 @@
 #include <xs>
 
 //#define DEBUG
-#define MAX_SPAWNS 256
+#define MAX_SPAWNS 512
 
 #if defined DEBUG
 new sprite_beam;
@@ -144,7 +144,7 @@ public client_PreThink(id)
 	else
 	{
 		new count = 0;
-		while (count < 5)
+		while (count < 10)
 		{
 			if (get_distance_f(g_Origin[id], g_NodeOrigin[g_NodeIndex[id]]) <= cvar_distance)
 			{
