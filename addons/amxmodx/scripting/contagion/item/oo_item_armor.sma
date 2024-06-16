@@ -3,14 +3,13 @@
 #include <oo_player>
 
 new GameItem:g_oItem;
-new g_Limit[MAX_PLAYERS + 1];
 
 public plugin_init()
 {
 	register_plugin("[OO] Item: Armor", "0.1", "holla");
 
-	new Store:store_o = any:oo_call(0, "TigStore@GetInstance");
-	g_oItem = oo_new("ItemArmor", "Armor", "+100 ap", 40);
+	new Store:store_o = any:oo_call(0, "ContagionStore@GetInstance");
+	g_oItem = oo_new("ItemArmor", "Armor", "+100 ap", 40, 3);
 	oo_call(store_o, "AddItem", g_oItem);
 }
 
@@ -31,7 +30,7 @@ public ItemArmor@CanBuy(id)
 
 	if (Float:get_entvar(id, var_armorvalue) >= oo_player_get_max_armor(id))
 	{
-		client_print(id, print_chat, "[Store] 無法購買: 你的護甲已滿")
+		client_print_color(id, print_team_red, "^4[Store] ^3無法購買: ^1你的護甲已滿")
 		return false;
 	}
 

@@ -8,8 +8,8 @@ public plugin_init()
 {
 	register_plugin("[OO] Item: Medkit", "0.1", "holla");
 
-	new Store:store_o = any:oo_call(0, "TigStore@GetInstance");
-	g_oItem = oo_new("ItemMedkit", "First Aid Kit", "+100 hp", 50);
+	new Store:store_o = any:oo_call(0, "ContagionStore@GetInstance");
+	g_oItem = oo_new("ItemMedkit", "First Aid Kit", "+100 hp", 50, 3);
 	oo_call(store_o, "AddItem", g_oItem);
 }
 
@@ -30,7 +30,7 @@ public ItemMedkit@CanBuy(id)
 
 	if (get_entvar(id, var_health) >= float(oo_player_get_max_health(id)))
 	{
-		client_print(id, print_chat, "[Store] 無法購買: 你的血量已滿")
+		client_print_color(id, print_team_red, "^4[Store] ^3無法購買: ^1你的血量已滿")
 		return false;
 	}
 

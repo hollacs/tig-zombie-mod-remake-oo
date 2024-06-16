@@ -8,8 +8,8 @@ public plugin_init()
 {
 	register_plugin("[OO] Item: Shock Nade", "0.1", "holla");
 
-	new Store:store_o = any:oo_call(0, "TigStore@GetInstance");
-	g_oItem = oo_new("ItemShockNade", "喪屍震撼彈", "ShockNade", 200);
+	new Store:store_o = any:oo_call(0, "ContagionStore@GetInstance");
+	g_oItem = oo_new("ItemShockNade", "喪屍震撼彈", "ShockNade", 200, 3);
 	oo_call(store_o, "AddItem", g_oItem);
 }
 
@@ -31,7 +31,7 @@ public ItemShockNade@CanBuy(id)
 
 	if (user_has_weapon(id, CSW_HEGRENADE))
 	{
-		client_print(id, print_chat, "[Store] 無法購買: 你已經擁有了")
+		client_print_color(id, print_team_red, "^4[Store] ^3無法購買: ^1你已經擁有了");
 		return false;
 	}
 

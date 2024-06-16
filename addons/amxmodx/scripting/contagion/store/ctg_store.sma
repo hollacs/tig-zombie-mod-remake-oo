@@ -17,8 +17,9 @@ public plugin_init()
 	register_clcmd("buyammo2", "CmdBuyAmmo2");
 
 	RegisterHookChain(RG_HandleMenu_ChooseAppearance, "OnChooseAppearance_Post", 1);
+	RegisterHookChain(RG_CSGameRules_RestartRound, "OnRestartRound");
 
-	g_oStore = oo_new("TigStore");
+	g_oStore = oo_new("ContagionStore");
 
 	new pcvar = create_cvar("ctg_store_ammo_price", "10");
 	bind_pcvar_num(pcvar, cvar_ammo_price);
@@ -26,16 +27,11 @@ public plugin_init()
 
 public oo_init()
 {
-	oo_class("TigStore", "Store")
+	oo_class("ContagionStore", "Store")
 	{
-		new cl[] = "TigStore";
-
-		//oo_ctor(cl, "Ctor")
-		oo_mthd(cl, "GetMenuTitle", @int(id), @stref(title), @int(len));
-		oo_mthd(cl, "CanShowMenu", @int(id));
-		oo_mthd(cl, "CanBuy", @int(id), @int(item_o));
-		oo_mthd(cl, "Buy", @int(id), @int(item_o));
-
+		new cl[] = "ContagionStore";
+		oo_mthd(cl, "GetPlayerMoney", @int(id));
+		oo_mthd(cl, "SetPlayerMoney", @int(id), @int(value));
 		oo_smthd(cl, "GetInstance");
 	}
 }
@@ -45,58 +41,22 @@ public OnChooseAppearance_Post(id)
 	rg_add_account(id, 10000, AS_SET);
 }
 
-public TigStore@GetMenuTitle(id, title[], len)
+public Store:ContagionStore@GetInstance() { return g_oStore; }
+
+public ContagionStore@GetPlayerMoney(id)
 {
-	new PlayerClass:class_o = oo_playerclass_get(id);
-	if (class_o)
-	{
-		static class[32];
-		oo_call(class_o, "GetClassName", class, charsmax(class));
-		formatex(title, len, "%s Store", class);
-	}
-	else
-	{
-		oo_call(oo_this(), "Store@GetMenuTitle", id, title, len);
-	}
+	return get_member(id, m_iAccount);
 }
 
-public TigStore@CanShowMenu(id)
+public ContagionStore@SetPlayerMoney(id, value)
 {
-	if (!is_user_alive(id))
-		return false;
-
-	return true;
+	rg_add_account(id, value, AS_SET, true);
 }
 
-public TigStore@CanBuy(id, StoreItem:item_o)
+public OnRestartRound()
 {
-	new price = oo_get(item_o, "price");
-	if (get_member(id, m_iAccount) < price)
-	{
-		client_print_color(id, print_team_default, "^4[Store] ^1你的金錢不足 (需要 ^3$%d^1)", price);
-		return false;
-	}
-
-	return true;
+	oo_call(g_oStore, "ResetBuyCount", 0, 0);
 }
-
-public TigStore@Buy(id, Item:item_o)
-{
-	if (oo_call(oo_this(), "Store@Buy", id, item_o))
-	{
-		new price = oo_get(item_o, "price");
-		rg_add_account(id, -price, AS_ADD, true);
-		
-		static name[32];
-		oo_get_str(item_o, "name", name, charsmax(name));
-		client_print_color(id, print_team_default, "^4[Store] ^1你花費 ^3$%d ^1購買了 ^3%s", price, name);
-		return true;
-	}
-
-	return false;
-}
-
-public Store:TigStore@GetInstance() { return g_oStore; }
 
 public CmdSayStore(id)
 {

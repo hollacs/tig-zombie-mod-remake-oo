@@ -13,16 +13,16 @@ public oo_init()
 	{
 		new cl[] = "HumanItem";
 
-		oo_ctor(cl, "Ctor", @str(name), @str(desc), @int(price));
+		oo_ctor(cl, "Ctor", @str(name), @str(desc), @int(price), @int(limit));
 		oo_mthd(cl, "CanUse", @int(id));
 		oo_mthd(cl, "CanShowInStoreMenu", @int(id));
 	}
 }
 
-public HumanItem@Ctor(const name[], const desc[], price)
+public HumanItem@Ctor(const name[], const desc[], price, limit)
 {
 	oo_super_ctor("GameItem", name, desc);
-	oo_super_ctor("StoreItem", price);
+	oo_super_ctor("StoreItem", price, limit);
 }
 
 public HumanItem@CanUse(id)
