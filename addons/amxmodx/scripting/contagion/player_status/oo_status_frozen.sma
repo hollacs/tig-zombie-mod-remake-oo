@@ -6,18 +6,11 @@
 #include <oo_player_class>
 #include <oo_player_status>
 #include <oo_assets>
+#include <player_rendering_layer>
 
 #define UNIT_SECOND (1<<12)
 #define FFADE_IN 0x0000
 #define BREAK_GLASS 0x01
-
-enum _:Render_e
-{
-	RenderMode,
-	RenderFx,
-	Float:RenderColor[3],
-	Float:RenderAmt
-};
 
 new Assets:g_oAssets;
 
@@ -39,7 +32,6 @@ public oo_init()
 	oo_class("FrozenStatus", "PlayerStatus")
 	{
 		new cl[] = "FrozenStatus";
-		oo_var(cl, "render", Render_e);
 		oo_var(cl, "freezetime", 1); // float
 		oo_var(cl, "start_time", 1); // float
 
@@ -47,8 +39,6 @@ public oo_init()
 		oo_dtor(cl, "Dtor");
 
 		oo_mthd(cl, "GetName", @stringex, @cell);
-		oo_mthd(cl, "SetRendering");
-		oo_mthd(cl, "ResetRendering");
 		oo_mthd(cl, "OnUpdate");
 
 		oo_smthd(cl, "Add", @int(player), @fl(freezetime));
@@ -77,13 +67,6 @@ public FrozenStatus@Ctor(id, Float:freezetime)
 	new this = oo_this();
 	oo_super_ctor("PlayerStatus", id);
 
-	static render[Render_e];
-	render[RenderMode] = get_entvar(id, var_rendermode);
-	render[RenderFx] = get_entvar(id, var_renderfx);
-	get_entvar(id, var_rendercolor, render[RenderColor]);
-	render[RenderAmt] = Float:get_entvar(id, var_renderamt);
-
-	oo_set_arr(this, "render", render);
 	oo_set(this, "start_time", get_gametime());
 	oo_set(this, "freezetime", freezetime);
 
@@ -116,14 +99,13 @@ public FrozenStatus@Ctor(id, Float:freezetime)
 	if (AssetsGetRandomSound(g_oAssets, "freeze", sound, charsmax(sound)))
 		emit_sound(id, CHAN_BODY, sound, 1.0, ATTN_NORM, 0, PITCH_NORM);
 
-	oo_call(this, "SetRendering");
+	render_push(id, kRenderFxGlowShell, Float:{0.0, 200.0, 200.0}, kRenderNormal, 16.0, freezetime, "freeze");
 }
 
 public FrozenStatus@Dtor()
 {
 	new this = oo_this();
 	new id = oo_get(this, "player_id");
-	oo_call(this, "ResetRendering");
 
 	rg_reset_maxspeed(id);
 
@@ -155,30 +137,8 @@ public FrozenStatus@Dtor()
 	static sound[64];
 	if (AssetsGetRandomSound(g_oAssets, "break", sound, charsmax(sound)))
 		emit_sound(id, CHAN_BODY, sound, 1.0, ATTN_NORM, 0, PITCH_NORM);
-}
 
-public FrozenStatus@SetRendering()
-{
-	new this = oo_this();
-	new id = oo_get(this, "player_id");
-	set_entvar(id, var_renderfx, kRenderFxGlowShell);
-	set_entvar(id, var_rendermode, kRenderNormal);
-	set_entvar(id, var_renderamt, 16.0);
-	set_entvar(id, var_rendercolor, Float:{0.0, 200.0, 200.0});
-}
-
-public FrozenStatus@ResetRendering()
-{
-	new this = oo_this();
-	new id = oo_get(this, "player_id");
-
-	static render[Render_e];
-	oo_get_arr(this, "render", render);
-
-	set_entvar(id, var_renderfx, render[RenderFx]);
-	set_entvar(id, var_rendermode, render[RenderMode]);
-	set_entvar(id, var_renderamt, render[RenderAmt]);
-	set_entvar(id, var_rendercolor, render[RenderColor]);
+	render_pop(id, -1, "freeze");
 }
 
 public FrozenStatus@GetName(output[], len)

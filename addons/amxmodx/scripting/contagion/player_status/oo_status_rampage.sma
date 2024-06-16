@@ -4,14 +4,7 @@
 #include <oo_player_class>
 #include <oo_player_status>
 #include <cs_painshock>
-
-enum _:Render_e
-{
-	RenderMode,
-	RenderFx,
-	Float:RenderColor[3],
-	Float:RenderAmt
-};
+#include <player_rendering_layer>
 
 public plugin_init()
 {
@@ -23,7 +16,6 @@ public oo_init()
 	oo_class("RampageStatus", "PlayerStatus")
 	{
 		new cl[] = "RampageStatus";
-		oo_var(cl, "render", Render_e);
 		oo_var(cl, "duration", 1); // float
 		oo_var(cl, "start_time", 1); // float
 		oo_var(cl, "speed", 1); // float
@@ -33,8 +25,6 @@ public oo_init()
 		oo_dtor(cl, "Dtor");
 
 		oo_mthd(cl, "GetName", @stringex, @cell);
-		oo_mthd(cl, "SetRendering");
-		oo_mthd(cl, "ResetRendering");
 		oo_mthd(cl, "OnUpdate");
 
 		oo_smthd(cl, "Set", @int(player), @fl(duration), @fl(speed), @fl(takedmg));
@@ -60,15 +50,9 @@ public RampageStatus@Ctor(player, Float:duration, Float:speed, Float:takedmg)
 	oo_set(this, "speed", speed);
 	oo_set(this, "takedmg", takedmg);
 
-	static render[Render_e];
-	render[RenderMode] = get_entvar(player, var_rendermode);
-	render[RenderFx] = get_entvar(player, var_renderfx);
-	get_entvar(player, var_rendercolor, render[RenderColor]);
-	render[RenderAmt] = Float:get_entvar(player, var_renderamt);
-	oo_set_arr(this, "render", render);
-
-	oo_call(this, "SetRendering");
 	SetFov(player, 110);
+
+	render_push(player, kRenderFxGlowShell, Float:{0.0, 255.0, 0.0}, kRenderNormal, 16.0, duration, "rampage");
 
 	RequestFrame("ResetMaxSpeed", player);
 }
@@ -78,37 +62,13 @@ public RampageStatus@Dtor()
 	new this = oo_this();
 	new id = oo_get(this, "player_id");
 	rg_reset_maxspeed(id);
-	oo_call(this, "ResetRendering");
+	render_pop(id, -1, "rampage"); 
 	SetFov(id, 90);
 }
 
 public RampageStatus@GetName(output[], len)
 {
 	return formatex(output, len, "Rampage");
-}
-
-public RampageStatus@SetRendering()
-{
-	new this = oo_this();
-	new id = oo_get(this, "player_id");
-	set_entvar(id, var_renderfx, kRenderFxGlowShell);
-	set_entvar(id, var_rendermode, kRenderNormal);
-	set_entvar(id, var_renderamt, 16.0);
-	set_entvar(id, var_rendercolor, Float:{0.0, 200.0, 0.0});
-}
-
-public RampageStatus@ResetRendering()
-{
-	new this = oo_this();
-	new id = oo_get(this, "player_id");
-
-	static render[Render_e];
-	oo_get_arr(this, "render", render);
-
-	set_entvar(id, var_renderfx, render[RenderFx]);
-	set_entvar(id, var_rendermode, render[RenderMode]);
-	set_entvar(id, var_renderamt, render[RenderAmt]);
-	set_entvar(id, var_rendercolor, render[RenderColor]);
 }
 
 public RampageStatus@OnUpdate()
