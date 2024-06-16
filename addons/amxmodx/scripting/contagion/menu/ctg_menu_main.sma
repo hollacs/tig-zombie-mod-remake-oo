@@ -14,7 +14,7 @@ public plugin_init()
 
 	register_clcmd("chooseteam", "CmdChooseTeam");
 
-	g_oStore = any:oo_call(0, "TigStore@GetInstance");
+	g_oStore = any:oo_call(0, "ContagionStore@GetInstance");
 
 	g_WeaponMenu[0] = find_plugin_byfile("ctg_menu_default_weapons.amxx");
 	if (g_WeaponMenu[0] != -1)
