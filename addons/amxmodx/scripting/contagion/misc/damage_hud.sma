@@ -23,7 +23,7 @@ public OnPlayerTakeDamage_Post(victim, inflictor, attacker, Float:damage, damage
 		return;
 
 	new bool:is_headshot = bool:(get_ent_data(victim, "CBaseMonster", "m_LastHitGroup") == HIT_HEAD);
-	AddDamage(attacker, damage, is_headshot, false);
+	AddDamage(attacker, damage, is_headshot);
 	//AddDamage(victim, damage, is_headshot, true);
 }
 
@@ -55,7 +55,6 @@ AddDamage(id, Float:damage, bool:headshot=false)
 	}
 
 	g_Time[id][index] = get_gametime() + 0.5;
-	g_Take[id][index] = is_take;
 
 	new color[3] = {0, 100, 255};
 	new Float:x, Float:y;
