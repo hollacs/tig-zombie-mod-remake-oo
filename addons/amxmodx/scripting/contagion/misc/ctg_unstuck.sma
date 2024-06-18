@@ -11,7 +11,7 @@ public plugin_init()
 
 public OO_OnPlayerClassSetProps(id)
 {
-	if (!IsPlayerStuck(id))
+	if (IsPlayerStuck(id))
 	{
 		csdm_spawn(id);
 	}
@@ -42,5 +42,5 @@ bool:IsPlayerStuck(id)
 			set_entvar(i, var_solid, solids[i]);
 	}
 
-	return bool:(!get_tr2(0, TR_StartSolid) && !get_tr2(0, TR_AllSolid) && get_tr2(0, TR_InOpen));
+	return bool:(get_tr2(0, TR_StartSolid) || get_tr2(0, TR_AllSolid) || !get_tr2(0, TR_InOpen));
 }
