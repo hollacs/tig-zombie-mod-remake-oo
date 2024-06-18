@@ -16,7 +16,6 @@ public plugin_init()
 	register_clcmd("buyammo1", "CmdBuyAmmo1");
 	register_clcmd("buyammo2", "CmdBuyAmmo2");
 
-	RegisterHookChain(RG_HandleMenu_ChooseAppearance, "OnChooseAppearance_Post", 1);
 	RegisterHookChain(RG_CSGameRules_RestartRound, "OnRestartRound");
 
 	g_oStore = oo_new("ContagionStore");
@@ -34,11 +33,6 @@ public oo_init()
 		oo_mthd(cl, "SetPlayerMoney", @int(id), @int(value));
 		oo_smthd(cl, "GetInstance");
 	}
-}
-
-public OnChooseAppearance_Post(id)
-{
-	rg_add_account(id, 10000, AS_SET);
 }
 
 public Store:ContagionStore@GetInstance() { return g_oStore; }
