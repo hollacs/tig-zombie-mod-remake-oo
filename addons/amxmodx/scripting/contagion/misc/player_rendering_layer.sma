@@ -1,5 +1,6 @@
 #include <amxmodx>
-#include <reapi>
+#include <hamsandwich>
+#include <engine>
 
 #define MAX_LAYERS 16
 
@@ -21,8 +22,7 @@ public plugin_init()
 {
 	register_plugin("Player Rendering Layer", "0.1", "holla");
 
-	RegisterHookChain(RG_CBasePlayer_PreThink, "OnPlayerPreThink");
-	RegisterHookChain(RG_CBasePlayer_Spawn, "OnPlayerSpawn_Post", 1);
+	RegisterHam(Ham_Spawn, "player", "OnPlayerSpawn_Post", 1);
 }
 
 public plugin_natives()
@@ -95,10 +95,10 @@ public OnPlayerSpawn_Post(id)
 	ClearRendering(id);
 }
 
-public OnPlayerPreThink(id)
+public client_PreThink(id)
 {
 	new Float:gametime = get_gametime();
-	if (gametime < g_NextUpdate[id])
+	if (gametime < g_NextUpdate[id]) // performance improve
 		return;
 
 	for (new i = 0; i < MAX_LAYERS; i++)
@@ -129,7 +129,7 @@ PushRendering(id, fx, Float:color[3], mode, Float:amount, Float:duration, const 
 		{
 			zindex = g_Rendering[id][i][render_zindex];
 
-			if (!index2 && equal(class, g_Rendering[id][index][render_class]))
+			if (index2 == -1 && equal(class, g_Rendering[id][i][render_class]))
 				index2 = i;
 		}
 		else if (index == -1)
@@ -158,10 +158,10 @@ PushRendering(id, fx, Float:color[3], mode, Float:amount, Float:duration, const 
 
 	if (index2 == -1 || g_Rendering[id][index2][render_zindex] >= zindex)
 	{
-		set_entvar(id, var_renderfx, fx);
-		set_entvar(id, var_rendermode, mode);
-		set_entvar(id, var_rendercolor, color);
-		set_entvar(id, var_renderamt, amount);
+		entity_set_int(id, EV_INT_renderfx, fx);
+		entity_set_int(id, EV_INT_rendermode, mode);
+		entity_set_vector(id, EV_VEC_rendercolor, color);
+		entity_set_float(id, EV_FL_renderamt, amount);
 	}
 
 	return index;
@@ -207,17 +207,17 @@ PopRendering(id, pop_index, const class[])
 
 	if (index == -1)
 	{
-		set_entvar(id, var_renderfx, kRenderFxNone);
-		set_entvar(id, var_rendermode, kRenderNormal);
-		set_entvar(id, var_rendercolor, Float:{0.0, 0.0, 0.0});
-		set_entvar(id, var_renderamt, 0.0);
+		entity_set_int(id, EV_INT_renderfx, kRenderFxNone);
+		entity_set_int(id, EV_INT_rendermode, kRenderNormal);
+		entity_set_vector(id, EV_VEC_rendercolor, Float:{0.0, 0.0, 0.0});
+		entity_set_float(id, EV_FL_renderamt, 0.0);
 		return;
 	}
 
-	set_entvar(id, var_renderfx, g_Rendering[id][index][render_fx]);
-	set_entvar(id, var_rendermode, g_Rendering[id][index][render_mode]);
-	set_entvar(id, var_rendercolor, g_Rendering[id][index][render_color]);
-	set_entvar(id, var_renderamt, g_Rendering[id][index][render_amount]);
+	entity_set_int(id, EV_INT_renderfx, g_Rendering[id][index][render_fx]);
+	entity_set_int(id, EV_INT_rendermode, g_Rendering[id][index][render_mode]);
+	entity_set_vector(id, EV_VEC_rendercolor, g_Rendering[id][index][render_color]);
+	entity_set_float(id, EV_FL_renderamt, g_Rendering[id][index][render_amount]);
 }
 
 ClearRendering(id)
@@ -225,10 +225,11 @@ ClearRendering(id)
 	for (new i = 0; i < MAX_LAYERS; i++)
 	{
 		g_Rendering[id][i][render_zindex] = 0;
+		g_Rendering[id][i][render_class][0] = 0;
 	}
 
-	set_entvar(id, var_renderfx, kRenderFxNone);
-	set_entvar(id, var_rendermode, kRenderNormal);
-	set_entvar(id, var_rendercolor, Float:{0.0, 0.0, 0.0});
-	set_entvar(id, var_renderamt, 0.0);
+	entity_set_int(id, EV_INT_renderfx, kRenderFxNone);
+	entity_set_int(id, EV_INT_rendermode, kRenderNormal);
+	entity_set_vector(id, EV_VEC_rendercolor, Float:{0.0, 0.0, 0.0});
+	entity_set_float(id, EV_FL_renderamt, 0.0);
 }
