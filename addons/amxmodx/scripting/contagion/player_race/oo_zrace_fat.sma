@@ -27,7 +27,7 @@ public plugin_init()
 		oo_new("PlayerRace", g_oClassInfo, "ZombieFat", "血量型"));
 
 	oo_call(g_oClassInfo, "CreateCvars");
-	oo_call(g_oClassInfo, "CreateCvar", "ctg_zombie_fat", "health", "3000");
+	oo_call(g_oClassInfo, "CreateCvar", "ctg_zombie_fat", "health", "2500");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_zombie_fat", "gravity", "1.0");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_zombie_fat", "speed", "0.95");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_zombie_fat", "knockback", "0.75");
