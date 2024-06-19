@@ -69,6 +69,8 @@ public oo_init()
 		oo_mthd(cl, "CreateCvars");
 		oo_mthd(cl, "LoadJson", @str(filename));
 		oo_mthd(cl, "ParseJson", @int(json));
+		oo_mthd(cl, "Clear");
+		oo_mthd(cl, "Clone", @obj(obj));
 	}
 
 	oo_class("PlayerClass")
@@ -130,19 +132,24 @@ public PlayerClassInfo@Dtor()
 	TrieDestroy(p_models_t);
 	TrieDestroy(cvars_t);
 
-	new TrieIter:iter = TrieIterCreate(replace_sounds_t);
-	{
-		new Array:sounds_a = Invalid_Array;
-		while (!TrieIterEnded(iter))
-		{
-			TrieIterGetCell(iter, sounds_a);
-			ArrayDestroy(sounds_a);
-
-			TrieIterNext(iter);
-		}
-		TrieIterDestroy(iter);
-	}
+	TrieArrayDestory(replace_sounds_t);
 	TrieDestroy(replace_sounds_t);
+}
+
+public PlayerClassInfo@Clear()
+{
+	new this = oo_this();
+	oo_call(this, "Assets@Clear");
+
+	ArrayClear(Array:oo_get(this, "player_models"));
+
+	TrieClear(Trie:oo_get(this, "v_models"));
+	TrieClear(Trie:oo_get(this, "p_models"));
+	TrieClear(Trie:oo_get(this, "cvars"));
+
+	new Trie:replace_sounds_t = Trie:oo_get(this, "replace_sounds");
+	TrieArrayDestory(replace_sounds_t);
+	TrieClear(replace_sounds_t);
 }
 
 public PlayerClassInfo@CreateCvar(const prefix[], const name[], const value[])
@@ -194,6 +201,10 @@ public PlayerClassInfo@ParseJson(JSON:json)
 				model[PM_Index] = json_get_bool(value_j);
 				ArrayPushArray(models_a, model);
 			}
+			else
+			{
+				log_amx("PlayerClassInfo@ParseJson : player model '%s' does not exist", value);
+			}
 			json_free(value_j);
 		}
 		json_free(models_j);
@@ -213,6 +224,8 @@ public PlayerClassInfo@ParseJson(JSON:json)
 
 			if (value[0] && file_exists(value, true))
 				precache_model(value);
+			else if (value[0])
+				log_amx("PlayerClassInfo@ParseJson : v_model '%s' does not exist", value);
 
 			TrieSetString(models_t, key, value);
 
@@ -239,6 +252,8 @@ public PlayerClassInfo@ParseJson(JSON:json)
 
 			if (value[0] && file_exists(value, true))
 				precache_model(value);
+			else if (value[0])
+				log_amx("PlayerClassInfo@ParseJson : p_model '%s' does not exist", value);
 
 			TrieSetString(models_t, key, value);
 
@@ -254,7 +269,7 @@ public PlayerClassInfo@ParseJson(JSON:json)
 	new JSON:sounds_j = json_object_get_value(json, "replace_sounds");
 	if (sounds_j != Invalid_JSON)
 	{
-		static soundpath[80];
+		static soundpath[80], j;
 		new JSON:value_j = Invalid_JSON;
 		new Array:sounds_a = Invalid_Array;
 		new Trie:sounds_t = Trie:oo_get(this, "replace_sounds");
@@ -270,14 +285,18 @@ public PlayerClassInfo@ParseJson(JSON:json)
 			}
 
 			sounds_a = ArrayCreate(64);
-			for (new i = json_array_get_count(value_j) - 1; i >= 0; i--)
+			for (j = json_array_get_count(value_j) - 1; j >= 0; j--)
 			{
-				json_array_get_string(value_j, i, value, charsmax(value));
+				json_array_get_string(value_j, j, value, charsmax(value));
 				formatex(soundpath, charsmax(soundpath), "sound/%s", value);
 				if (file_exists(soundpath, true))
 				{
 					precache_sound(value);
 					ArrayPushString(sounds_a, value);
+				}
+				else
+				{
+					log_amx("PlayerClassInfo@ParseJson : replace sound '%s' does not exist", value);
 				}
 			}
 
@@ -290,6 +309,38 @@ public PlayerClassInfo@ParseJson(JSON:json)
 		}
 
 		json_free(sounds_j)
+	}
+}
+
+public PlayerClassInfo@Clone(any:object)
+{
+	new this = oo_this();
+	oo_call(this, "Assets@Clone", object);
+
+	new Array:player_models_a[2];
+	player_models_a[0] = Array:oo_get(this, "player_models");
+	player_models_a[1] = Array:oo_get(object, "player_models");
+	ArrayDestroy(player_models_a[0]);
+	player_models_a[0] = ArrayClone(player_models_a[1]);
+	oo_set(this, "player_models", player_models_a[0]);
+
+	TrieCopyString(Trie:oo_get(object, "v_models"), Trie:oo_get(this, "v_models"));
+	TrieCopyString(Trie:oo_get(object, "p_models"), Trie:oo_get(this, "p_models"));
+	TrieCopyArray(Trie:oo_get(object, "replace_sounds"), Trie:oo_get(this, "replace_sounds"));
+
+	new Trie:cvars_t = Trie:oo_get(this, "cvars");
+	new TrieIter:iter = TrieIterCreate(Trie:oo_get(object, "cvars"));
+	{
+		static key[32], cell;
+		while (!TrieIterEnded(iter))
+		{
+			TrieIterGetKey(iter, key, charsmax(key))
+			TrieIterGetCell(iter, cell);
+			TrieSetCell(cvars_t, key, cell);
+
+			TrieIterNext(iter);
+		}
+		TrieIterDestroy(iter);
 	}
 }
 
@@ -755,4 +806,56 @@ any:ChangePlayerClass(id, const class_name[], bool:set_props=true)
 
 	ExecuteForward(g_Forward[FW_CHANGE_CLASS_POST], g_ForwardResult, id, class_name, set_props);
 	return g_oPlayerClass[id];
+}
+
+stock TrieCopyString(Trie:t1, Trie:t2)
+{
+	new TrieIter:iter = TrieIterCreate(t1);
+	{
+		static key[32], value[64];
+		while (!TrieIterEnded(iter))
+		{
+			TrieIterGetKey(iter, key, charsmax(key))
+			TrieIterGetString(iter, value, charsmax(value));
+			TrieSetString(t2, key, value);
+
+			TrieIterNext(iter);
+		}
+		TrieIterDestroy(iter);
+	}
+}
+
+stock TrieArrayDestory(Trie:t)
+{
+	new TrieIter:iter = TrieIterCreate(t);
+	{
+		new Array:a;
+		while (!TrieIterEnded(iter))
+		{
+			TrieIterGetCell(iter, a);
+			ArrayDestroy(a);
+
+			TrieIterNext(iter);
+		}
+		TrieIterDestroy(iter);
+	}
+}
+
+stock TrieCopyArray(Trie:t1, Trie:t2)
+{
+	new TrieIter:iter = TrieIterCreate(t1);
+	{
+		static key[32], Array:a1, Array:a2;
+		while (!TrieIterEnded(iter))
+		{
+			TrieIterGetKey(iter, key, charsmax(key))
+			TrieIterGetCell(iter, a1);
+
+			a2 = ArrayClone(a1);
+			TrieSetCell(t2, key, a2);
+
+			TrieIterNext(iter);
+		}
+		TrieIterDestroy(iter);
+	}
 }
