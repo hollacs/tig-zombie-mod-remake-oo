@@ -44,13 +44,13 @@ public SelectHandle(failstate, Handle:query_h, const error[], errcode, const dat
 	{
 		new money = SQL_ReadResult(query_h, 0);
 		rg_add_account(id, money, AS_SET);
-
-		ctg_db_add_step(id);
 	}
 	else
 	{
 		rg_add_account(id, cvar_startmoney, AS_SET);
 	}
+
+	ctg_db_add_step(id);
 }
 
 public CTG_OnDbSavePlayerData(id, const authid[])
@@ -71,10 +71,7 @@ public UpdateHandle(failstate, Handle:query_h, const error[], errcode, const dat
 	if (!CheckSqlQueryHandle(failstate, error, errcode))
 		return;
 
-	if (SQL_AffectedRows(query_h) == 1)
-	{
-		new id = ctg_db_get_player_id(data);
-		if (id)
-			ctg_db_add_step(id);
-	}
+	new id = ctg_db_get_player_id(data);
+	if (id)
+		ctg_db_add_step(id);
 }
