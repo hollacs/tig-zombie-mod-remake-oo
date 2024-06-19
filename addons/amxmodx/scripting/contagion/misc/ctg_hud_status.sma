@@ -4,6 +4,7 @@
 #include <oo>
 #include <oo_player_class>
 #include <oo_player_status>
+#include <ctg_player_level>
 
 new g_HudSyncObj;
 
@@ -46,10 +47,12 @@ public UpdateHud(id)
 	else if (status[0] == 'D')
 		color = {255, 10, 10};
 
-	set_hudmessage(color[0], color[1], color[2], -1.0, 0.9, 0, 0.0, 0.3, 0.0, 0.0, 4);
-	ShowSyncHudMsg(id, g_HudSyncObj, "HP: %d | AP: %d | Class: %s | Status: %s", 
-		get_user_health(id),
-		get_user_armor(id),
-		classname,
-		status);
+	new level 	= ctg_get_player_level(id);
+	new exp 	= ctg_get_player_exp(id);
+	new required_exp = ctg_get_required_exp(level);
+
+	set_hudmessage(color[0], color[1], color[2], -1.0, 0.89, 0, 0.0, 0.3, 0.0, 0.0, 4);
+	ShowSyncHudMsg(id, g_HudSyncObj, "HP: %d | AP: %d | Class: %s | Status: %s^nLevel: %d | EXP: %d/%d (%.1f%%)", 
+		get_user_health(id), get_user_armor(id), classname, status,
+		level, exp, required_exp, exp / float(required_exp) * 100.0);
 }
