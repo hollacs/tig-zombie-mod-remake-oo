@@ -3,7 +3,7 @@
 #include <reapi>
 #include <oo_player_class>
 #include <oo_player_status>
-#include <oo_zombie_mode>
+#include <ctg_game_mode>
 #include <oo_assets>
 
 public plugin_init()
@@ -115,7 +115,7 @@ public VirusStatus@Death()
 	new attacker = oo_get(this, "attacker");
 
 	oo_call(this, "Delete");
-	oo_infect_player(id, attacker);
+	ctg_infect_player(id, attacker);
 }
 
 public VirusStatus@Delete()
