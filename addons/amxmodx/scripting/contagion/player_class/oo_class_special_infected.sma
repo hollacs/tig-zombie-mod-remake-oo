@@ -11,12 +11,15 @@ public oo_init()
 		new const cl[] = "SpecialInfected";
 		oo_mthd(cl, "GetClassInfo");
 		oo_mthd(cl, "SetProperties", @bool(set_team));
+
+		oo_smthd(cl, "ClassInfo");
 	}
 }
 
 public plugin_precache()
 {
 	g_oClassInfo = oo_new("ZombieClassInfo", "SpecialInfected");
+	oo_call(g_oClassInfo, "Clone", oo_call(0, "Zombie@ClassInfo"));
 	oo_call(g_oClassInfo, "LoadJson", "special_infected.json");
 }
 
@@ -26,6 +29,11 @@ public plugin_init()
 }
 
 public PlayerClassInfo:SpecialInfected@GetClassInfo()
+{
+	return g_oClassInfo;
+}
+
+public PlayerClassInfo:SpecialInfected@ClassInfo()
 {
 	return g_oClassInfo;
 }

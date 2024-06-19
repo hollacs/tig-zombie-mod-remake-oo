@@ -51,6 +51,8 @@ public oo_init()
 		oo_mthd(cl, "OnKnifeAttack1_Post", @cell);
 		oo_mthd(cl, "OnKnifeAttack2_Post", @cell);
 		oo_mthd(cl, "Rampage");
+
+		oo_smthd(cl, "ClassInfo");
 	}
 }
 
@@ -538,6 +540,11 @@ public Zombie@OnKnifeAttack2_Post(ent)
 		set_member(ent, m_Weapon_flTimeWeaponIdle, 
 			Float:get_member(ent, m_Weapon_flTimeWeaponIdle) * get_pcvar_float(pcvar));
 	}
+}
+
+public PlayerClassInfo:Zombie@ClassInfo()
+{
+	return g_oClassInfo;
 }
 
 public OnKnifePrimaryAttack(ent)

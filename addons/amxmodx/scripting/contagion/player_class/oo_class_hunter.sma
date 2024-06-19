@@ -38,6 +38,7 @@ public oo_init()
 public plugin_precache()
 {
 	g_oClassInfo = oo_new("ZombieClassInfo", "Hunter");
+	oo_call(g_oClassInfo, "Clone", oo_call(0, "SpecialInfected@ClassInfo"));
 	oo_call(g_oClassInfo, "LoadJson", "hunter.json");
 }
 

@@ -33,6 +33,7 @@ public oo_init()
 public plugin_precache()
 {
 	g_oClassInfo = oo_new("ZombieClassInfo", "Nemesis");
+	oo_call(g_oClassInfo, "Clone", oo_call(0, "Boss@ClassInfo"));
 	oo_call(g_oClassInfo, "LoadJson", "nemesis.json");
 }
 
