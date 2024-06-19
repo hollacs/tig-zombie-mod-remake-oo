@@ -36,11 +36,6 @@ public oo_init()
 		new const cl[] = "ContagionGame";
 		oo_var(cl, "has_intro", 1);
 		oo_var(cl, "countdown_time", 1);
-		oo_var(cl, "special_infected_count", 1);
-		oo_var(cl, "next_special_infected", 1);
-		oo_var(cl, "next_boss", 1);
-		oo_var(cl, "has_boss", 1);
-		oo_var(cl, "boss_dead", 1);
 
 		oo_ctor(cl, "Ctor");
 		oo_dtor(cl, "Dtor");
@@ -208,7 +203,7 @@ public ContagionGame@OnThink()
 
 					new countdown = floatround(roundstart_time + cvar_wait - current_time, floatround_ceil);
 					set_dhudmessage(0, 255, 0, -1.0, 0.2, 0, 0.0, 1.0, 0.0, 0.0);
-					show_dhudmessage(0, "遊戲將在 %d 秒後開始", countdown);
+					show_dhudmessage(0, "遊戲在 %d 秒後開始", countdown);
 
 					new word[8];
 					num_to_word(countdown, word, charsmax(word));

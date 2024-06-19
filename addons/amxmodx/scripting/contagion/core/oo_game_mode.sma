@@ -175,6 +175,7 @@ public GameMode@OnGiveDefaultItems(id) { return false; }
 public GameMode@CanTouchWeapon(id, ent, weapon_id) { return true; }
 public GameMode@OnChooseTeam(id, MenuChooseTeam:slot) {}
 public GameMode@CanPlayerRespawn(id) { return true; }
+public GameMode@OnChooseAppearance(id, slot) {}
 
 public GameMode@OnPlayerRespawn(id)
 {
@@ -324,12 +325,11 @@ public OO_OnPlayerRespawn(id)
 	return PLUGIN_CONTINUE;
 }
 
-public TaskThink(param[], taskid)
+public TaskThink(mode_o)
 {
-	new GameMode:mode_o = any:param[0];
 	if (!oo_object_exists(mode_o))
 	{
-		remove_task(taskid);
+		remove_task(mode_o);
 		return;
 	}
 
