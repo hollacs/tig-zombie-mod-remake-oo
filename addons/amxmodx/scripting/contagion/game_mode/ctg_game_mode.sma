@@ -9,8 +9,6 @@
 #include <oo_game_mode>
 #include <oo_assets>
 
-#define TASK_BGM 1337
-
 new const g_ObjectiveEnts[][] = {
 	"func_bomb_target",
 	"info_bomb_target",
@@ -26,21 +24,16 @@ new const g_ObjectiveEnts[][] = {
 new Float:cvar_ratio;
 new Float:cvar_wait;
 new cvar_lights[32];
-new cvar_money_damage, Float:cvar_money_human_damaged_hp, Float:cvar_money_zombie_damaged_hp;
-new cvar_money_zombie_killed, cvar_money_human_killed;
-new cvar_money_human_win, cvar_money_zombie_win;
 
 new Assets:g_oAssets;
 new g_fwEntSpawn;
-
-new Float:g_DamageDealtHuman[MAX_PLAYERS + 1];
-new Float:g_DamageDealtZombie[MAX_PLAYERS + 1];
+new g_fwInfectPlayer[2];
 
 public oo_init()
 {
-	oo_class("ZombieMode", "GameMode");
+	oo_class("ContagionGame", "GameMode");
 	{
-		new const cl[] = "ZombieMode";
+		new const cl[] = "ContagionGame";
 		oo_var(cl, "has_intro", 1);
 		oo_var(cl, "countdown_time", 1);
 		oo_var(cl, "special_infected_count", 1);
@@ -77,7 +70,7 @@ public oo_init()
 
 public plugin_precache()
 {
-	oo_gamemode_set(oo_new("ZombieMode"));
+	oo_gamemode_set(oo_new("ContagionGame"));
 
 	g_oAssets = oo_new("Assets");
 	oo_call(g_oAssets, "LoadJson", "gamemode/zombie.json");
@@ -87,9 +80,7 @@ public plugin_precache()
 
 public plugin_init()
 {
-	register_plugin("[OO] Mode: Zombie", "0.1", "holla");
-
-	register_message(get_user_msgid("SendAudio"), "Message_SendAudio");
+	register_plugin("[CTG] Game Mode", "0.1", "holla");
 
 	unregister_forward(FM_Spawn, g_fwEntSpawn);
 
@@ -103,26 +94,8 @@ public plugin_init()
 	bind_pcvar_string(pcvar, cvar_lights, charsmax(cvar_lights));
 	hook_cvar_change(pcvar, "OnCvarLights");
 
-	pcvar = create_cvar("ctg_money_damage", "10");
-	bind_pcvar_num(pcvar, cvar_money_damage);
-
-	pcvar = create_cvar("ctg_money_human_damaged_hp", "400");
-	bind_pcvar_float(pcvar, cvar_money_human_damaged_hp);
-
-	pcvar = create_cvar("ctg_money_zombie_damaged_hp", "400");
-	bind_pcvar_float(pcvar, cvar_money_zombie_damaged_hp);
-
-	pcvar = create_cvar("ctg_money_human_killed", "20");
-	bind_pcvar_num(pcvar, cvar_money_human_killed);
-
-	pcvar = create_cvar("ctg_money_zombie_killed", "10");
-	bind_pcvar_num(pcvar, cvar_money_zombie_killed);
-
-	pcvar = create_cvar("ctg_money_human_win", "20");
-	bind_pcvar_num(pcvar, cvar_money_human_win);
-
-	pcvar = create_cvar("ctg_money_zombie_win", "20");
-	bind_pcvar_num(pcvar, cvar_money_zombie_win);
+	g_fwInfectPlayer[0] = CreateMultiForward("CTG_OnInfectPlayer", ET_CONTINUE, FP_CELL, FP_CELL);
+	g_fwInfectPlayer[1] = CreateMultiForward("CTG_OnInfectPlayer_Post", ET_IGNORE, FP_CELL, FP_CELL);
 
 	set_member_game(m_bTCantBuy, true);
 	set_member_game(m_bCTCantBuy, true);
@@ -133,9 +106,9 @@ public plugin_init()
 
 public plugin_natives()
 {
-	register_library("oo_zombie_mode");
+	register_library("ctg_game_mode");
 
-	register_native("oo_infect_player", "native_infect_player");
+	register_native("ctg_infect_player", "native_infect_player");
 }
 
 public native_infect_player()
@@ -148,7 +121,7 @@ public native_infect_player()
 	}
 
 	new GameMode:mode_o = oo_gamemode_get();
-	if (!oo_isa(mode_o, "ZombieMode"))
+	if (!oo_isa(mode_o, "ContagionGame"))
 		return false;
 
 	new attacker = get_param(2);
@@ -175,37 +148,25 @@ public OnEntSpawn(ent)
 	return FMRES_IGNORED;
 }
 
-public Message_SendAudio(msgid, msgdest, id)
-{
-	static audio[17];
-	get_msg_arg_string(2, audio, charsmax(audio));
-	
-	if(equal(audio[7], "terwin") || equal(audio[7], "ctwin"))
-		return PLUGIN_HANDLED;
-	
-	return PLUGIN_CONTINUE;
-}
-
 public OnCvarLights(pcvar, const old_value[], const new_value[])
 {
 	new GameMode:mode_o = oo_gamemode_get();
-	if (mode_o == @null || !oo_isa(mode_o, "ZombieMode", true))
+	if (mode_o == @null || !oo_isa(mode_o, "ContagionGame", true))
 		return;
 	
 	set_lights(new_value);
 }
 
-public ZombieMode@Ctor()
+public ContagionGame@Ctor()
 {
 	oo_super_ctor("GameMode");
 }
 
-public ZombieMode@Dtor()
+public ContagionGame@Dtor()
 {
-	remove_task(TASK_BGM);
 }
 
-public ZombieMode@OnGiveDefaultItems(id)
+public ContagionGame@OnGiveDefaultItems(id)
 {
 	if (oo_playerclass_isa(id, "Human"))
 	{
@@ -216,7 +177,7 @@ public ZombieMode@OnGiveDefaultItems(id)
 	return true;
 }
 
-public ZombieMode@OnThink()
+public ContagionGame@OnThink()
 {
 	new this = oo_this();
 	oo_call(this, "GameMode@OnThink");
@@ -260,7 +221,7 @@ public ZombieMode@OnThink()
 	}
 }
 
-public ZombieMode@Start()
+public ContagionGame@Start()
 {
 	new this = oo_this();
 	oo_call(this, "GameMode@Start");
@@ -302,59 +263,19 @@ public ZombieMode@Start()
 	static sound[64];
 	if (AssetsGetRandomGeneric(g_oAssets, "game_start", sound, charsmax(sound)))
 		client_cmd(0, "spk ^"%s^"", sound);
-
-	oo_set(this, "next_special_infected", get_gametime() + random_float(20.0, 60.0));
-	oo_set(this, "special_infected_count", 0);
-
-	oo_set(this, "next_boss", get_gametime() + (float(get_member_game(m_iRoundTimeSecs)) * 0.333333) - 20.0 + random_float(-20.0, 20.0));
-	oo_set(this, "has_boss", false);
-	oo_set(this, "boss_dead", false);
-
-	server_print("next_boss = %f", Float:oo_get(this, "next_boss") - get_gametime());
 }
 
-public ZombieMode@End()
+public ContagionGame@End()
 {
-	server_print("end");
-	remove_task(TASK_BGM);
-	client_cmd(0, "mp3 stop");
 }
 
-public ZombieMode@OnRoundEnd(WinStatus:win, ScenarioEventEndRound:event, Float:tmDelay)
+public ContagionGame@OnRoundEnd(WinStatus:win, ScenarioEventEndRound:event, Float:tmDelay)
 {
 	new this = oo_this();
 	oo_call(this, "End");
-
-	switch (win)
-	{
-		case WINSTATUS_TERRORISTS:
-		{
-			for (new i = 1; i <= MaxClients; i++)
-			{
-				if (is_user_connected(i) && get_member(i, m_iMenu) != Menu_ChooseAppearance &&
-					(TEAM_TERRORIST <= TeamName:get_member(i, m_iTeam) <= TEAM_CT) &&
-					oo_playerclass_isa(i, "Zombie"))
-				{
-					rg_add_account(i, cvar_money_zombie_win);
-				}
-			}
-		}
-		case WINSTATUS_CTS:
-		{
-			for (new i = 1; i <= MaxClients; i++)
-			{
-				if (is_user_connected(i) && get_member(i, m_iMenu) != Menu_ChooseAppearance &&
-					(TEAM_TERRORIST <= TeamName:get_member(i, m_iTeam) <= TEAM_CT) &&
-					oo_playerclass_isa(i, "Human"))
-				{
-					rg_add_account(i, cvar_money_human_win);
-				}
-			}
-		}
-	}
 }
 
-public ZombieMode@CheckWinConditions()
+public ContagionGame@CheckWinConditions()
 {
 	new this = oo_this();
 	oo_call(this, "GameMode@CheckWinConditions");
@@ -386,42 +307,26 @@ public ZombieMode@CheckWinConditions()
 
 	if (spawnable_count > 1 && human_count < 1) // all humans are dead
 	{
-		rg_round_end(5.0, WINSTATUS_TERRORISTS, ROUND_TERRORISTS_WIN, "Zombies Win");
-
-		set_dhudmessage(255, 50, 50, -1.0, 0.2, 0, 0.0, 3.0, 1.0, 1.0);
-		show_dhudmessage(0, "Zombies Win");
-
-		static sound[64];
-		if (AssetsGetRandomGeneric(g_oAssets, "zombies_win", sound, charsmax(sound)))
-			client_cmd(0, "spk ^"%s^"", sound);
-
+		rg_round_end(5.0, WINSTATUS_TERRORISTS, ROUND_TERRORISTS_WIN, "Zombies Win", .trigger=true);
 		return true;
 	}
 
-	if (spawnable_count > 1 && zombie_count < 1 && human_count > 0 && oo_get(this, "boss_dead"))
+	if (spawnable_count > 1 && zombie_count < 1 && human_count > 0)
 	{
-		rg_round_end(5.0, WINSTATUS_CTS, ROUND_CTS_WIN, "Humans Win");
-
-		set_dhudmessage(0, 255, 0, -1.0, 0.2, 0, 0.0, 3.0, 1.0, 1.0);
-		show_dhudmessage(0, "Humans Win");
-
-		static sound[64];
-		if (AssetsGetRandomGeneric(g_oAssets, "survivors_win", sound, charsmax(sound)))
-			client_cmd(0, "spk ^"%s^"", sound);
-
+		rg_round_end(5.0, WINSTATUS_TERRORISTS, ROUND_TERRORISTS_WIN, "Humans Win", .trigger=true);
 		return true;
 	}
 
 	if (spawnable_count > 1 && zombie_count < 1 && human_count < 1) // all players are dead
 	{
-		rg_round_end(5.0, WINSTATUS_DRAW, ROUND_END_DRAW, "Round Draw");
+		rg_round_end(5.0, WINSTATUS_DRAW, ROUND_END_DRAW, "Round Draw", .trigger=true);
 		return true;
 	}
 
 	return true;
 }
 
-public ZombieMode@OnRoundTimeExpired()	
+public ContagionGame@OnRoundTimeExpired()	
 {
 	new human_count = 0;
 	new zombie_count = 0;
@@ -447,27 +352,19 @@ public ZombieMode@OnRoundTimeExpired()
 
 	if (human_count > 0 && zombie_count > 0 && spawnable_count > 0)
 	{
-		rg_round_end(5.0, WINSTATUS_CTS, ROUND_CTS_WIN, "Humans Win");
-
-		set_dhudmessage(0, 255, 0, -1.0, 0.2, 0, 0.0, 3.0, 1.0, 1.0);
-		show_dhudmessage(0, "Humans Win");
-
-		static sound[64];
-		if (AssetsGetRandomGeneric(g_oAssets, "survivors_win", sound, charsmax(sound)))
-			client_cmd(0, "spk ^"%s^"", sound);
-
+		rg_round_end(5.0, WINSTATUS_CTS, ROUND_CTS_WIN, "Humans Win", .trigger=true);
 		return;
 	}
 
-	rg_round_end(5.0, WINSTATUS_DRAW, ROUND_END_DRAW, "Round Draw");
+	rg_round_end(5.0, WINSTATUS_DRAW, ROUND_END_DRAW, "Round Draw", .trigger=true);
 }
 
-public ZombieMode@OnPlayerSpawn(id)
+public ContagionGame@OnPlayerSpawn(id)
 {
 	oo_call(oo_this(), "GameMode@OnPlayerSpawn", id);
 }
 
-public ZombieMode@OnPlayerKilled(id, attacker, shouldgib)
+public ContagionGame@OnPlayerKilled(id, attacker, shouldgib)
 {
 	new this = oo_this();
 	oo_call(this, "GameMode@OnPlayerKilled", id, attacker, shouldgib);
@@ -476,45 +373,14 @@ public ZombieMode@OnPlayerKilled(id, attacker, shouldgib)
 	{
 		oo_player_set_respawn(id, 5.0);
 	}
-
-	if (is_user_connected(attacker) && get_member(id, m_iTeam) != get_member(attacker, m_iTeam))
-	{
-		if (oo_playerclass_isa(id, "Zombie"))
-		{
-			rg_add_account(attacker, cvar_money_zombie_killed);
-		}
-		else
-		{
-			rg_add_account(attacker, cvar_money_human_killed);
-		}
-	}
-
-	if (oo_get(this, "has_boss") && oo_playerclass_isa(id, "Nemesis"))
-	{
-		set_dhudmessage(0, 75, 200, -1.0, 0.3, 0, 0.0, 3.0, 0.0, 1.0);
-		show_dhudmessage(0, "Nemesis 已經陣亡");
-
-		static sound[64];
-		if (AssetsGetRandomGeneric(g_oAssets, "boss_death", sound, charsmax(sound)))
-		{
-			client_cmd(0, "spk %s", sound);
-		}
-
-		client_cmd(0, "mp3 stop");
-
-		oo_set(this, "boss_dead", true);
-	}
 }
 
-public ZombieMode@CanPlayerRespawn(id)
+public ContagionGame@CanPlayerRespawn(id)
 {
-	if (oo_get(oo_this(), "boss_dead"))
-		return false;
-	
 	return true;
 }
 
-public ZombieMode@OnPlayerRespawn(id)
+public ContagionGame@OnPlayerRespawn(id)
 {
 	new this = oo_this();
 	if (!oo_call(this, "CanPlayerRespawn", id))
@@ -522,99 +388,17 @@ public ZombieMode@OnPlayerRespawn(id)
 
 	if (oo_get(this, "is_started"))
 	{
-		new Float:gametime = get_gametime();
-		if (gametime >= Float:oo_get(this, "next_boss") && !oo_get(this, "has_boss"))
-		{
-			if (is_user_bot(id) && gametime < Float:oo_get(this, "next_boss") + 20.0)
-				goto RespawnAsZombie;
-
-			set_dhudmessage(255, 10, 10, -1.0, 0.3, 1, 0.0, 3.0, 0.0, 1.0);
-			show_dhudmessage(0, "Nemesis Detected !!");
-
-			static sound[64];
-			if (AssetsGetRandomGeneric(g_oAssets, "boss_detected", sound, charsmax(sound)))
-			{
-				client_cmd(0, "spk %s", sound);
-			}
-			
-			remove_task(TASK_BGM);
-			set_task(10.0, "PlayBossBGM", TASK_BGM);
-
-			oo_playerclass_change(id, "Nemesis", false);
-			oo_set(this, "has_boss", true);
-		}
-		else if (gametime >= Float:oo_get(this, "next_special_infected") && oo_get(this, "special_infected_count") < 3)
-		{
-			if (is_user_bot(id) && gametime < Float:oo_get(this, "next_special_infected") + 20.0)
-				goto RespawnAsZombie;
-
-			static const CLASSES[3][] = {"Spitter", "Boomer", "Hunter"};
-
-			static classes[3];
-			new num_classes = 0;
-			for (new i = 0; i < sizeof CLASSES; i++)
-			{
-				if (oo_playerclass_count(CLASSES[i]) < 1)
-					classes[num_classes++] = i;
-			}
-
-			if (num_classes < 1)
-				goto RespawnAsZombie;
-
-			new index = classes[random(num_classes)];
-
-			set_dhudmessage(0, 75, 200, -1.0, 0.3, 1, 0.0, 3.0, 0.0, 1.0);
-			show_dhudmessage(0, "%s Detected !!", CLASSES[index]);
-
-			static sound[64];
-			if (AssetsGetRandomGeneric(g_oAssets, "klaxon", sound, charsmax(sound)))
-			{
-				client_cmd(0, "spk %s", sound);
-			}
-
-			oo_set(this, "special_infected_count", oo_get(this, "special_infected_count") + 1);
-			oo_set(this, "next_special_infected", gametime + random_float(30.0, 100.0));
-
-			oo_playerclass_change(id, CLASSES[index], false);
-		}
-		else
-		{
-		RespawnAsZombie:
-			oo_playerclass_change(id, "Zombie", false);
-		}
+		oo_playerclass_change(id, "Zombie", false);
 	}
 
 	return true;
 }
 
-public ZombieMode@OnPlayerTakeDamage(victim, inflictor, attacker, Float:damage, damagebits)
+public ContagionGame@OnPlayerTakeDamage(victim, inflictor, attacker, Float:damage, damagebits)
 {
-	if ((damagebits & DMG_BULLET) && inflictor == attacker && is_user_connected(attacker) && get_member(victim, m_iTeam) != get_member(attacker, m_iTeam))
-	{
-		if (oo_playerclass_isa(victim, "Zombie"))
-		{
-			g_DamageDealtHuman[attacker] += damage;
-
-			if (g_DamageDealtHuman[attacker] >= cvar_money_human_damaged_hp)
-			{
-				rg_add_account(attacker, cvar_money_damage);
-				g_DamageDealtHuman[attacker] = 0.0;
-			}
-		}
-		else
-		{
-			g_DamageDealtZombie[attacker] += damage;
-
-			if (g_DamageDealtZombie[attacker] >= cvar_money_zombie_damaged_hp)
-			{
-				rg_add_account(attacker, cvar_money_damage);
-				g_DamageDealtZombie[attacker] = 0.0;
-			}
-		}
-	}
 }
 
-public ZombieMode@InfectPlayer(victim, attacker)
+public ContagionGame@InfectPlayer(victim, attacker)
 {
 	static msgDeathMsg;
 	msgDeathMsg || (msgDeathMsg = get_user_msgid("DeathMsg"));
@@ -651,7 +435,7 @@ public ZombieMode@InfectPlayer(victim, attacker)
 	set_task(0.1, "TaskChangeTeam", victim);
 }
 
-public ZombieMode@OnRestartRound()
+public ContagionGame@OnRestartRound()
 {
 	new this = oo_this();
 	oo_call(this, "GameMode@OnRestartRound");
@@ -668,47 +452,13 @@ public ZombieMode@OnRestartRound()
 		
 		oo_playerclass_change(i, "Human", false);
 	}
-
-	client_cmd(0, "mp3 stop");
-	remove_task(TASK_BGM);
 }
 
-public ZombieMode@OnRoundFreezeEnd()
+public ContagionGame@OnRoundFreezeEnd()
 {
-	static players[32], players_real[32];
-	new num_players = 0;
-	new num_reals = 0;
-
-	for (new i = 1; i <= MaxClients; i++)
-	{
-		if (!is_user_alive(i))
-			continue;
-		
-		players[num_players++] = i;
-
-		if (!is_user_bot(i))
-			players_real[num_reals++] = i;
-	}
-
-	new player = 0;
-	if (num_players >= 2)
-	{
-		if (num_reals > 0)
-			player = players_real[random(num_reals)];
-		else
-			player = players[random(num_players)];
-	}
-
-	if (player)
-	{
-		oo_playerclass_change(player, "Leader", true);
-
-		set_dhudmessage(0, 100, 255, 0.01, 0.35, 0, 0.0, 3.0, 0.0, 1.0);
-		show_dhudmessage(0, "%n 被選中成為 Leader", player);
-	}
 }
 
-public ZombieMode@OnChooseTeam(id, MenuChooseTeam:slot)
+public ContagionGame@OnChooseTeam(id, MenuChooseTeam:slot)
 {
 	if (slot == MenuChoose_Spec)
 	{
@@ -732,7 +482,7 @@ public ZombieMode@OnChooseTeam(id, MenuChooseTeam:slot)
 	}
 }
 
-public ZombieMode@CanHavePlayerItem(id, item)
+public ContagionGame@CanHavePlayerItem(id, item)
 {
 	if (oo_playerclass_isa(id, "Zombie"))
 	{
@@ -744,18 +494,12 @@ public ZombieMode@CanHavePlayerItem(id, item)
 	return true;
 }
 
-public ZombieMode@CanTouchWeapon(id, ent, weapon_id)
+public ContagionGame@CanTouchWeapon(id, ent, weapon_id)
 {
 	if (oo_playerclass_isa(id, "Zombie"))
 		return false;
 
 	return true;
-}
-
-public OO_OnPlayerDtor(id)
-{
-	g_DamageDealtZombie[id] = 0.0;
-	g_DamageDealtHuman[id] = 0.0;
 }
 
 public TaskChangeTeam(id)
@@ -769,13 +513,6 @@ public TaskChangeTeam(id)
 public client_disconnected(id)
 {
 	remove_task(id);
-}
-
-public PlayBossBGM()
-{
-	static sound[64];
-	if (AssetsGetRandomGeneric(g_oAssets, "nemesis_bgm", sound, charsmax(sound)))
-		client_cmd(0, "mp3 loop %s", sound);
 }
 
 bool:IsSpawnablePlayer(id)

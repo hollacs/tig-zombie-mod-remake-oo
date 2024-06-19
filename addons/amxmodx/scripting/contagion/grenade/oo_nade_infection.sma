@@ -5,7 +5,7 @@
 #include <reapi>
 #include <oo_player_class>
 #include <oo_player_status>
-#include <oo_zombie_mode>
+#include <ctg_game_mode>
 #include <xs>
 #include <oo_assets>
 
@@ -125,12 +125,12 @@ public InfectionNade@Detonate()
 		armor = Float:get_entvar(victim, var_armorvalue);
 		if (damage >= armor)
 		{
-			oo_infect_player(victim, attacker)
+			ctg_infect_player(victim, attacker)
 		}
 		else
 		{
 			set_entvar(victim, var_armorvalue, armor - damage);
-			oo_call(0, "PoisonStatus@Add", victim, attacker, 1.0, 1.0, 20);
+			oo_call(0, "VirusStatus@Add", victim, attacker, 1.0, 1.0, 20);
 		}
 	}
 
