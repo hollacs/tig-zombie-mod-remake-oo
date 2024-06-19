@@ -5,11 +5,6 @@
 #include <reapi>
 #include <oo_player_class>
 
-enum (+=100)
-{
-	TASK_THINK = 0
-};
-
 new GameMode:g_oCurrentMode;
 
 public plugin_init()
@@ -17,6 +12,7 @@ public plugin_init()
 	register_plugin("[OO] Game Mode", "0.1", "holla");
 
 	RegisterHookChain(RG_HandleMenu_ChooseTeam, "OnChooseTeam_Post", 1);
+	RegisterHookChain(RG_HandleMenu_ChooseAppearance, "OnChooseAppearance_Post", 1);
 	RegisterHookChain(RG_CBasePlayer_Spawn, "OnPlayerSpawn_Post", 1);
 	RegisterHookChain(RG_CBasePlayer_Killed, "OnPlayerKilled_Post", 1);
 	RegisterHookChain(RG_CSGameRules_CheckWinConditions, "OnCheckWinConditions");
@@ -96,6 +92,7 @@ public oo_init()
 		oo_mthd(cl, "OnRoundFreezeEnd");
 		oo_mthd(cl, "OnRoundEnd", @int(status), @int(event), @fl(delay));
 		oo_mthd(cl, "OnChooseTeam", @int(player), @int(slot));
+		oo_mthd(cl, "OnChooseAppearance", @int(player), @int(slot));
 		oo_mthd(cl, "OnPlayerRespawn", @int(player));
 
 		oo_smthd(cl, "GetCurrent");
@@ -130,14 +127,12 @@ public GameMode@End()
 
 public GameMode@StartThink(Float:time)
 {
-	new param[2];
-	param[0] = oo_this();
-	set_task_ex(time, "TaskThink", TASK_THINK, param, sizeof param, SetTask_Repeat);
+	set_task_ex(time, "TaskThink", oo_this(), _, _, SetTask_Repeat);
 }
 
 public GameMode@StopThink()
 {
-	remove_task(TASK_THINK);
+	remove_task(oo_this());
 }
 
 public GameMode@CheckWinConditions()
@@ -186,7 +181,6 @@ public GameMode@OnPlayerRespawn(id)
 	return oo_call(oo_this(), "CanPlayerRespawn", id) ? true : false;
 }
 
-
 public GameMode:GameMode@GetCurrent()
 {
 	return g_oCurrentMode;
@@ -204,6 +198,12 @@ public OnChooseTeam_Post(id, MenuChooseTeam:slot)
 	
 	if (g_oCurrentMode != @null)
 		oo_call(g_oCurrentMode, "OnChooseTeam", id, slot);
+}
+
+public OnChooseAppearance_Post(id, MenuChooseAppearance:slot)
+{
+	if (g_oCurrentMode != @null)
+		oo_call(g_oCurrentMode, "OnChooseAppearance", id, slot);
 }
 
 public OnRestartRound()
@@ -226,8 +226,6 @@ public OnRoundFreezeEnd()
 
 public OnRoundEnd(WinStatus:status, ScenarioEventEndRound:event, Float:tmDelay)
 {
-	server_print("round end");
-
 	if (g_oCurrentMode != @null)
 		oo_call(g_oCurrentMode, "OnRoundEnd", status, event, tmDelay);
 }
