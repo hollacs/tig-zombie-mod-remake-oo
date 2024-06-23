@@ -24,6 +24,9 @@ public plugin_init()
 {
 	register_plugin("[OO] Status: Frozen", "0.1", "holla");
 
+	oo_hook_mthd("Player", "OnKilled", "OnPlayerKilled");
+	oo_hook_dtor("PlayerClass", "OnPlayerClassDtor");
+
 	RegisterHam(Ham_Player_Jump, "player", "OnPlayerJump");
 }
 
@@ -38,7 +41,7 @@ public oo_init()
 		oo_ctor(cl, "Ctor", @int(player), @fl(freezetime));
 		oo_dtor(cl, "Dtor");
 
-		oo_mthd(cl, "GetName", @stringex, @cell);
+		oo_mthd(cl, "GetName", OO_STRING_REF, OO_CELL);
 		oo_mthd(cl, "OnUpdate");
 
 		oo_smthd(cl, "Add", @int(player), @fl(freezetime));
@@ -64,7 +67,7 @@ public FrozenStatus@Add(id, Float:freezetime)
 
 public FrozenStatus@Ctor(id, Float:freezetime)
 {
-	new this = oo_this();
+	new this = @this;
 	oo_super_ctor("PlayerStatus", id);
 
 	oo_set(this, "start_time", get_gametime());
@@ -104,7 +107,7 @@ public FrozenStatus@Ctor(id, Float:freezetime)
 
 public FrozenStatus@Dtor()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	rg_reset_maxspeed(id);
@@ -148,9 +151,10 @@ public FrozenStatus@GetName(output[], len)
 
 public FrozenStatus@OnUpdate()
 {
-	new this = oo_this();
+	new this = @this;
 	if (get_gametime() >= Float:oo_get(this, "start_time") + Float:oo_get(this, "freezetime"))
 	{
+		//server_print("onupdate del (%d)", this);
 		oo_call(this, "Delete");
 		return;
 	}
@@ -166,12 +170,14 @@ public OnPlayerJump(id)
 	return HAM_IGNORED;
 }
 
-public OO_OnPlayerKilled(id)
+public OnPlayerKilled()
 {
+	new id = oo_get(@this, "player_id");
 	oo_playerstatus_remove(id, "FrozenStatus");
 }
 
-public OO_OnPlayerClassDtor(id)
+public OnPlayerClassDtor()
 {
+	new id = oo_get(@this, "player_id");
 	oo_playerstatus_remove(id, "FrozenStatus");
 }

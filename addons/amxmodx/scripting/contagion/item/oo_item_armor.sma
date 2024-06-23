@@ -25,7 +25,7 @@ public oo_init()
 
 public ItemArmor@CanBuy(id)
 {
-	if (!oo_call(oo_this(), "CanUse", id))
+	if (!oo_call(@this, "CanUse", id))
 		return false;
 
 	if (Float:get_entvar(id, var_armorvalue) >= oo_player_get_max_armor(id))

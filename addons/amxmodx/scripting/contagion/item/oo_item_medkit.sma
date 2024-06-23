@@ -25,7 +25,7 @@ public oo_init()
 
 public ItemMedkit@CanBuy(id)
 {
-	if (!oo_call(oo_this(), "CanUse", id))
+	if (!oo_call(@this, "CanUse", id))
 		return false;
 
 	if (get_entvar(id, var_health) >= float(oo_player_get_max_health(id)))

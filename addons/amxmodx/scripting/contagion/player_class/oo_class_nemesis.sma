@@ -25,7 +25,7 @@ public oo_init()
 
 		oo_mthd(cl, "OnCmdStart", @int(uc), @int(seed));
 		oo_mthd(cl, "OnThink");
-		oo_mthd(cl, "SetProperties", @bool(set_team));
+		oo_mthd(cl, "SetProps", @bool(set_team));
 		oo_mthd(cl, "RocketLaunch");
 	}
 }
@@ -40,6 +40,8 @@ public plugin_precache()
 public plugin_init()
 {
 	register_plugin("[OO] Class: Nemesis", "0.1", "holla");
+
+	oo_hook_mthd("IceNade", "Frozen", "OnIceNadeFrozen");
 
 	register_think("rpg_rocket", "OnRocketThink");
 	register_touch("rpg_rocket", "*", "OnRocketTouch");
@@ -122,12 +124,12 @@ public OnRocketThink(ent)
 	entity_set_float(ent, EV_FL_nextthink, get_gametime() + 0.05);
 }
 
-public OO_OnIceNadeFrozen(victim, attacker, &Float:duration)
+public OnIceNadeFrozen(victim, attacker, &Float:duration)
 {
 	if (oo_playerclass_isa(victim, "Nemesis") && !oo_playerclass_isa(attacker, "Leader"))
-		return PLUGIN_HANDLED;
+		return OO_SUPERCEDE;
 
-	return PLUGIN_CONTINUE;
+	return OO_CONTINUE;
 }
 
 public OnRocketTouch(ent, toucher)
@@ -179,11 +181,11 @@ public any:Nemesis@GetClassInfo()
 	return g_oClassInfo;
 }
 
-public Nemesis@SetProperties(bool:set_team)
+public Nemesis@SetProps(bool:set_team)
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
-	oo_call(this, "Boss@SetProperties", set_team);
+	oo_call(this, "Boss@SetProps", set_team);
 
 	new pcvar;
 	if ((pcvar = oo_call(this, "GetCvarPtr", "health2")))
@@ -197,7 +199,7 @@ public Nemesis@SetProperties(bool:set_team)
 
 public Nemesis@OnCmdStart(uc, seed)
 {
-	new this = oo_this()
+	new this = @this
 	new id = oo_get(this, "player_id");
 
 	if (!is_user_alive(id))
@@ -222,7 +224,7 @@ public Nemesis@OnCmdStart(uc, seed)
 
 public Nemesis@RocketLaunch()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	new ent = rg_create_entity("info_target");
@@ -263,7 +265,7 @@ public Nemesis@RocketLaunch()
 
 public Nemesis@OnThink()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	oo_call(this, "Zombie@OnThink");

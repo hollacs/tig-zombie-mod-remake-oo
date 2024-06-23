@@ -91,7 +91,7 @@ public IceNade@Dtor()
 
 public IceNade@SetWorldModel()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_call(this, "Grenade@SetWorldModel");
 
 	new ent = oo_get(this, "ent");
@@ -113,7 +113,7 @@ public IceNade@SetWorldModel()
 
 public IceNade@Detonate()
 {
-	new this = oo_this();
+	new this = @this;
 	new ent = oo_get(this, "ent");
 
 	static Float:origin[3];
@@ -141,16 +141,12 @@ public IceNade@Detonate()
 
 public IceNade@Frozen(victim, attacker, Float:duration)
 {
-	ExecuteForward(g_fwFrozen, g_fwRet, victim, attacker, duration);
-	if (g_fwRet == PLUGIN_HANDLED)
-		return;
-	
 	oo_call(0, "FrozenStatus@Add", victim, duration)
 }
 
 public IceNade@DetonateEffect()
 {
-	new this = oo_this();
+	new this = @this;
 	new ent = oo_get(this, "ent");
 
 	static Float:origin[3];

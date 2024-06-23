@@ -34,7 +34,7 @@ public oo_init()
 
 public Assets@Ctor()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_set(this, "models", TrieCreate());
 	oo_set(this, "sounds", TrieCreate());
 	oo_set(this, "sprites", TrieCreate());
@@ -43,7 +43,7 @@ public Assets@Ctor()
 
 public Assets@Dtor()
 {
-	new this = oo_this();
+	new this = @this;
 	new Trie:sounds_t = Trie:oo_get(this, "sounds");
 	TrieArrayDestory(sounds_t);
 	TrieDestroy(sounds_t);
@@ -61,7 +61,7 @@ public Assets@Dtor()
 
 public bool:Assets@LoadJson(const filepath[])
 {
-	new this = oo_this();
+	new this = @this;
 
 	static fullpath[100];
 	get_configsdir(fullpath, charsmax(fullpath));
@@ -87,7 +87,7 @@ public bool:Assets@LoadJson(const filepath[])
 
 public Assets@ParseJson(JSON:json)
 {
-	new this = oo_this();
+	new this = @this;
 
 	static key[32], value[64], j;
 
@@ -209,13 +209,13 @@ public Assets@ParseJson(JSON:json)
 
 public Assets@GetModel(const key[], model[], len)
 {
-	return TrieGetString(Trie:oo_get(oo_this(), "models"), key, model, len);
+	return TrieGetString(Trie:oo_get(@this, "models"), key, model, len);
 }
 
 public Array:Assets@GetGeneric(const key[])
 {
 	new Array:a;
-	if (TrieGetCell(Trie:oo_get(oo_this(), "generics"), key, _:a))
+	if (TrieGetCell(Trie:oo_get(@this, "generics"), key, _:a))
 		return a;
 
 	return Invalid_Array;
@@ -224,7 +224,7 @@ public Array:Assets@GetGeneric(const key[])
 public Assets@GetSprite(const key[])
 {
 	new index;
-	if (TrieGetCell(Trie:oo_get(oo_this(), "sprites"), key, index))
+	if (TrieGetCell(Trie:oo_get(@this, "sprites"), key, index))
 		return index;
 
 	return 0;
@@ -233,7 +233,7 @@ public Assets@GetSprite(const key[])
 public Array:Assets@GetSound(const key[])
 {
 	new Array:a;
-	if (TrieGetCell(Trie:oo_get(oo_this(), "sounds"), key, _:a))
+	if (TrieGetCell(Trie:oo_get(@this, "sounds"), key, _:a))
 		return a;
 
 	return Invalid_Array;
@@ -241,7 +241,7 @@ public Array:Assets@GetSound(const key[])
 
 public Assets@Clear()
 {
-	new this = oo_this();
+	new this = @this;
 	TrieClear(Trie:oo_get(this, "models"));
 	TrieClear(Trie:oo_get(this, "sprites"));
 	
@@ -256,7 +256,7 @@ public Assets@Clear()
 
 public Assets@Clone(Assets:obj)
 {
-	new this = oo_this();
+	new this = @this;
 	oo_call(this, "Clear");
 
 	TrieCopyString(Trie:oo_get(obj, "models"), Trie:oo_get(this, "models"));

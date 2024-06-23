@@ -7,6 +7,10 @@ new g_PlayerStatusNum[MAX_PLAYERS + 1];
 public plugin_init()
 {
 	register_plugin("[OO] Player Status", "0.1", "holla");
+
+	oo_hook_ctor("Player", "Ctor", "OnPlayerCtor");
+	oo_hook_dtor("Player", "OnPlayerDtor");
+	oo_hook_mthd("Player", "OnPreThink", "OnPlayerPreThink");
 }
 
 public oo_init()
@@ -27,7 +31,7 @@ public oo_init()
 
 public PlayerStatus@Ctor(player_id)
 {
-	new this = oo_this();
+	new this = @this;
 	oo_set(this, "player_id", player_id);
 }
 
@@ -37,9 +41,10 @@ public PlayerStatus@OnUpdate() {}
 
 public PlayerStatus@Delete()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
+	//server_print("del %d %d", id, this);
 	DeletePlayerStatus(id, PlayerStatus:this);
 }
 
@@ -140,14 +145,17 @@ public PlayerStatus:native_get()
 	return PlayerStatus:ArrayGetCell(g_aPlayerStatus[id], index);
 }
 
-public OO_OnPlayerCtor(id)
+public OnPlayerCtor(id)
 {
+	//server_print("id is %d", id);
 	g_aPlayerStatus[id] = ArrayCreate(1);
 	g_PlayerStatusNum[id] = 0;
 }
 
-public OO_OnPlayerDtor(id)
+public OnPlayerDtor()
 {
+	new id = oo_get(@this, "player_id");
+
 	while (g_PlayerStatusNum[id] > 0)
 	{
 		oo_delete(PlayerStatus:ArrayGetCell(g_aPlayerStatus[id], 0));
@@ -158,8 +166,10 @@ public OO_OnPlayerDtor(id)
 	ArrayDestroy(g_aPlayerStatus[id]);
 }
 
-public OO_OnPlayerPreThink(id)
+public OnPlayerPreThink()
 {
+	new id = oo_get(@this, "player_id");
+
 	new PlayerStatus:status_o;
 	for (new i = 0; i < g_PlayerStatusNum[id]; i++)
 	{

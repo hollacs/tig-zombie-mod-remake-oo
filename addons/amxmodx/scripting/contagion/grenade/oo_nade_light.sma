@@ -78,7 +78,7 @@ public LightNade@Dtor()
 
 public LightNade@SetWorldModel()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_call(this, "Grenade@SetWorldModel");
 
 	new ent = oo_get(this, "ent");
@@ -100,7 +100,7 @@ public LightNade@SetWorldModel()
 
 public LightNade@Think()
 {
-	new this = oo_this();
+	new this = @this;
 	new ent = oo_get(this, "ent");
 
 	new Float:gametime = get_gametime();

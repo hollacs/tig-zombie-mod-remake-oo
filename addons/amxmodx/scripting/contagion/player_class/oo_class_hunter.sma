@@ -91,7 +91,7 @@ public OnPlayerTouch(id, id2)
 
 public Hunter@Dtor()
 {
-	g_IsLeaping[oo_get(oo_this(), "player_id")] = false;
+	g_IsLeaping[oo_get(@this, "player_id")] = false;
 }
 
 public Hunter@OnTouchPlayer(id2)
@@ -99,7 +99,7 @@ public Hunter@OnTouchPlayer(id2)
 	if (!oo_playerclass_isa(id2, "Human"))
 		return PLUGIN_CONTINUE;
 
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	new Float:gametime = get_gametime()
@@ -126,7 +126,7 @@ public PlayerClassInfo:Hunter@GetClassInfo()
 
 public Hunter@OnPainShock(victim, Float:damage, &Float:value)
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 	oo_call(this, "SpecialInfected@OnPainShock", victim, damage, value);
 
@@ -163,7 +163,7 @@ public Hunter@OnPainShock(victim, Float:damage, &Float:value)
 
 public Hunter@OnCmdStart(uc, seed)
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	if (!is_user_alive(id))
@@ -209,7 +209,7 @@ public Hunter@OnCmdStart(uc, seed)
 
 public Hunter@Leap()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	static Float:angle[3], Float:velocity[3];

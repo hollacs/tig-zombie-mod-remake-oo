@@ -68,7 +68,7 @@ public plugin_init()
 
 public GrenadeInfo@Ctor(const class[])
 {
-	new this = oo_this();
+	new this = @this;
 	oo_super_ctor("Assets");
 	oo_set_str(this, "class", class);
 
@@ -78,7 +78,7 @@ public GrenadeInfo@Ctor(const class[])
 
 public GrenadeInfo@SetWeaponModel(ent)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new id = get_member(ent, m_pPlayer);
 	if (is_user_alive(id))
@@ -95,7 +95,7 @@ public GrenadeInfo@SetWeaponModel(ent)
 
 public GrenadeInfo@LoadJson(const filename[])
 {
-	new this = oo_this();
+	new this = @this;
 
 	static filepath[100];
 	format(filepath, charsmax(filepath), "grenade/%s", filename);
@@ -112,7 +112,7 @@ public GrenadeInfo@Condition()
 
 public Grenade@Ctor(ent)
 {
-	new this = oo_this();
+	new this = @this;
 	oo_set(this, "ent", ent);
 	oo_set(this, "is_detonated", false);
 	set_entvar(ent, var_nade_obj, this);
@@ -120,7 +120,7 @@ public Grenade@Ctor(ent)
 
 public Grenade@Dtor()
 {
-	new this = oo_this();
+	new this = @this;
 
 	new ent = oo_get(this, "ent");
 	if (is_entity(ent))
@@ -129,7 +129,7 @@ public Grenade@Dtor()
 
 public Grenade@SetWorldModel()
 {
-	new this = oo_this();
+	new this = @this;
 
 	new GrenadeInfo:info_o = any:oo_call(this, "GetInfo");
 	if (info_o != @null)
@@ -153,7 +153,7 @@ public Grenade@GetInfo()
 
 public Grenade@Think()
 {
-	new this = oo_this();
+	new this = @this;
 	new ent = oo_get(this, "ent");
 
 	if (!oo_get(this, "is_detonated"))
@@ -176,7 +176,7 @@ public Grenade@Touch(toucher) {}
 
 public Grenade@Detonate()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_set(this, "is_detonated", true);
 	oo_call(this, "PlayDetonateSound");
 	oo_call(this, "DetonateEffect");
@@ -187,7 +187,7 @@ public Grenade@DetonateEffect() {}
 
 public Grenade@PlayDetonateSound()
 {
-	new this = oo_this();
+	new this = @this;
 	new ent = oo_get(this, "ent");
 
 	oo_set(this, "is_detonated", true);
@@ -205,7 +205,7 @@ public Grenade@PlayDetonateSound()
 
 public Grenade@RemoveEntity()
 {
-	new ent = oo_get(oo_this(), "ent");
+	new ent = oo_get(@this, "ent");
 	if (is_entity(ent))
 		engfunc(EngFunc_RemoveEntity, ent);
 }

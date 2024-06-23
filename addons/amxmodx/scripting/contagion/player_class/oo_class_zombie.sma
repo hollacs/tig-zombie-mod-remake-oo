@@ -36,20 +36,20 @@ public oo_init()
 
 		oo_mthd(cl, "GetClassInfo");
 		oo_mthd(cl, "RemoveWeapons");
-		oo_mthd(cl, "SetProperties", @bool(set_team));
+		oo_mthd(cl, "SetProps", @bool(set_team));
 		oo_mthd(cl, "SetTeam");
 		oo_mthd(cl, "GetArmorPenetration");
-		oo_mthd(cl, "ChangeSound", @cell, @string, @cell, @cell, @cell, @cell);
-		oo_mthd(cl, "OnGiveDamage", @cell, @cell, @byref, @cell);
-		oo_mthd(cl, "OnTakeDamage", @cell, @cell, @byref, @cell);
+		oo_mthd(cl, "ChangeSound", OO_CELL, OO_STRING, OO_CELL, OO_CELL, OO_CELL, OO_CELL);
+		oo_mthd(cl, "OnGiveDamage", OO_CELL, OO_CELL, OO_BYREF, OO_CELL);
+		oo_mthd(cl, "OnTakeDamage", OO_CELL, OO_CELL, OO_BYREF, OO_CELL);
 		oo_mthd(cl, "OnThink");
-		oo_mthd(cl, "OnPainShock", @cell, @float, @byref);
-		oo_mthd(cl, "OnPainShockBy", @cell, @float, @byref);
-		oo_mthd(cl, "OnKnockBack", @cell, @float, @cell, @array[3]);
-		oo_mthd(cl, "OnKnifeAttack1", @cell);
-		oo_mthd(cl, "OnKnifeAttack2", @cell);
-		oo_mthd(cl, "OnKnifeAttack1_Post", @cell);
-		oo_mthd(cl, "OnKnifeAttack2_Post", @cell);
+		oo_mthd(cl, "OnPainShock", OO_CELL, OO_FLOAT, OO_BYREF);
+		oo_mthd(cl, "OnPainShockBy", OO_CELL, OO_FLOAT, OO_BYREF);
+		oo_mthd(cl, "OnKnockBack", OO_CELL, OO_FLOAT, OO_CELL, OO_ARRAY[3]);
+		oo_mthd(cl, "OnKnifeAttack1", OO_CELL);
+		oo_mthd(cl, "OnKnifeAttack2", OO_CELL);
+		oo_mthd(cl, "OnKnifeAttack1_Post", OO_CELL);
+		oo_mthd(cl, "OnKnifeAttack2_Post", OO_CELL);
 		oo_mthd(cl, "Rampage");
 
 		oo_smthd(cl, "ClassInfo");
@@ -97,10 +97,11 @@ public plugin_init()
 
 public ZombieClassInfo@CreateCvars()
 {
-	new this = oo_this();
+	new this = @this;
 
 	oo_call(this, "CreateCvar", "ctg_zombie", "health", "1000"); // 生命
 	oo_call(this, "CreateCvar", "ctg_zombie", "gravity", "1.0"); // 重力
+	oo_call(this, "CreateCvar", "ctg_zombie", "armor", "0");
 	oo_call(this, "CreateCvar", "ctg_zombie", "speed", "1.0"); // 速度
 	oo_call(this, "CreateCvar", "ctg_zombie", "knockback", "1.0"); // 擊退
 	oo_call(this, "CreateCvar", "ctg_zombie", "painshock", "1.0"); // 僵直
@@ -114,7 +115,7 @@ public ZombieClassInfo@CreateCvars()
 	oo_call(this, "CreateCvar", "ctg_zombie", "rampage_takedmg", "1.2"); // 暴走時承受的傷害倍率
 	oo_call(this, "CreateCvar", "ctg_zombie", "rampage_needed", "100"); // 暴走需要的護甲值
 	oo_call(this, "CreateCvar", "ctg_zombie", "swing_dmg", "10"); // 左刀傷害
-	oo_call(this, "CreateCvar", "ctg_zombie", "swing2_dmg", "13"); // 左刀傷害2
+	oo_call(this, "CreateCvar", "ctg_zombie", "swing2_dmg", "12"); // 左刀傷害2
 	oo_call(this, "CreateCvar", "ctg_zombie", "swing_speed", "1.0"); // 左刀攻擊速度
 	oo_call(this, "CreateCvar", "ctg_zombie", "swing_dist", "48"); // 左刀攻擊距離
 	oo_call(this, "CreateCvar", "ctg_zombie", "swing_pain", "0.9"); // 左刀對人類造成的僵直
@@ -125,6 +126,7 @@ public ZombieClassInfo@CreateCvars()
 	oo_call(this, "CreateCvar", "ctg_zombie", "backstab_dmg", "1.25"); // 背刀傷害
 	oo_call(this, "CreateCvar", "ctg_zombie", "attack_pain", "1.0"); // 攻擊對人類造成的整體僵直
 	oo_call(this, "CreateCvar", "ctg_zombie", "dmg", "1.0"); // 整體傷害
+	oo_call(this, "CreateCvar", "ctg_zombie", "dmg_head", "3.0"); // 爆頭傷害
 }
 
 public CmdDrop(id)
@@ -144,7 +146,7 @@ public Zombie@Ctor(player)
 {
 	oo_super_ctor("PlayerClass", player);
 
-	new this = oo_this();
+	new this = @this;
 	oo_set(this, "next_idle", get_gametime() + random_float(cvar_idle_sound_time[0], cvar_idle_sound_time[1]));
 
 	oo_set(this, "next_restore_ap", get_gametime() + 1.0);
@@ -164,12 +166,12 @@ public PlayerClassInfo:Zombie@GetClassInfo()
 
 public Zombie@SetTeam()
 {
-	rg_set_user_team(oo_get(oo_this(), "player_id"), TEAM_TERRORIST, MODEL_UNASSIGNED, true, true);
+	rg_set_user_team(oo_get(@this, "player_id"), TEAM_TERRORIST, MODEL_UNASSIGNED, true, true);
 }
 
 public Zombie@OnThink()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	if (!is_user_alive(id))
@@ -237,7 +239,7 @@ public Zombie@OnThink()
 
 public Zombie@ChangeSound(channel, sample[], Float:vol, Float:attn, flags, pitch)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new PlayerClassInfo:info_o = any:oo_call(this, "GetClassInfo");
 	if (info_o == @null)
@@ -266,16 +268,16 @@ public Zombie@ChangeSound(channel, sample[], Float:vol, Float:attn, flags, pitch
 	return oo_call(this, "PlayerClass@ChangeSound", channel, sample, vol, attn, flags, pitch);
 }
 
-public Zombie@SetProperties(bool:set_team)
+public Zombie@SetProps(bool:set_team)
 {
-	new this = oo_this();
+	new this = @this;
 	oo_call(this, "RemoveWeapons");
-	oo_call(this, "PlayerClass@SetProperties", set_team);
+	oo_call(this, "PlayerClass@SetProps", set_team);
 }
 
 public Zombie@RemoveWeapons()
 {
-	new id = oo_get(oo_this(), "player_id");
+	new id = oo_get(@this, "player_id");
 	for (new i = _:PRIMARY_WEAPON_SLOT; i <= _:PISTOL_SLOT; i++)
 	{
 		rg_drop_items_by_slot(id, any:i);
@@ -287,7 +289,7 @@ public Zombie@RemoveWeapons()
 
 public Zombie@OnGiveDamage(inflictor, victim, &Float:damage, damagebits)
 {
-	new this = oo_this();
+	new this = @this;
 	new attacker = oo_get(this, "player_id");
 
 	new PlayerClassInfo:info_o = any:oo_call(this, "GetClassInfo");
@@ -334,7 +336,7 @@ public Zombie@OnGiveDamage(inflictor, victim, &Float:damage, damagebits)
 
 public Zombie@OnTakeDamage(inflictor, attacker, &Float:damage, damagebits)
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	if (inflictor != attacker || !is_user_connected(attacker) || oo_playerclass_isa(attacker, "Zombie"))
@@ -363,7 +365,7 @@ public Zombie@OnTakeDamage(inflictor, attacker, &Float:damage, damagebits)
 
 public bool:Zombie@Rampage()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	new PlayerClassInfo:info_o = any:oo_call(this, "GetClassInfo");
@@ -406,7 +408,7 @@ public bool:Zombie@Rampage()
 
 public Float:Zombie@GetArmorPenetration()
 {
-	new this = oo_this();
+	new this = @this;
 
 	new pcvar = oo_call(this, "GetCvarPtr", "armor_penetration");
 	if (pcvar)
@@ -417,7 +419,7 @@ public Float:Zombie@GetArmorPenetration()
 
 public Zombie@OnPainShock(victim, Float:damage, &Float:value)
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	if (get_user_weapon(id) != CSW_KNIFE)
@@ -444,7 +446,7 @@ public Zombie@OnPainShock(victim, Float:damage, &Float:value)
 
 public Zombie@OnPainShockBy(attacker, Float:damage, &Float:value)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new pcvar_painshock = oo_call(this, "GetCvarPtr", "painshock");
 	if (pcvar_painshock)
@@ -455,7 +457,7 @@ public Zombie@OnPainShockBy(attacker, Float:damage, &Float:value)
 
 public Zombie@OnKnockBack(attacker, Float:damage, tr, Float:vec[3])
 {
-	new this = oo_this();
+	new this = @this;
 
 	new pcvar_knockback = oo_call(this, "GetCvarPtr", "knockback");
 	if (pcvar_knockback)
@@ -466,7 +468,7 @@ public Zombie@OnKnockBack(attacker, Float:damage, tr, Float:vec[3])
 
 public Zombie@OnKnifeAttack1(ent)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new PlayerClassInfo:info_o = any:oo_call(this, "GetClassInfo");
 	if (info_o == @null)
@@ -489,7 +491,7 @@ public Zombie@OnKnifeAttack1(ent)
 
 public Zombie@OnKnifeAttack2(ent)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new PlayerClassInfo:info_o = any:oo_call(this, "GetClassInfo");
 	if (info_o == @null)
@@ -512,7 +514,7 @@ public Zombie@OnKnifeAttack2(ent)
 
 public Zombie@OnKnifeAttack1_Post(ent)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new pcvar = oo_call(this, "GetCvarPtr", "swing_speed");
 	if (pcvar)
@@ -528,7 +530,7 @@ public Zombie@OnKnifeAttack1_Post(ent)
 
 public Zombie@OnKnifeAttack2_Post(ent)
 {
-	new this = oo_this();
+	new this = @this;
 	
 	new pcvar = oo_call(this, "GetCvarPtr", "stab_speed");
 	if (pcvar)

@@ -34,14 +34,14 @@ public oo_init()
 
 public ItemGrenade@Ctor(const name[], const desc[], price, limit, weapon)
 {
-	new this = oo_this();
+	new this = @this;
 	oo_super_ctor("HumanItem", name, desc, price, limit);
 	oo_set(this, "weapon_id", weapon);
 }
 
 public ItemGrenade@CanBuy(id)
 {
-	new this = oo_this();
+	new this = @this;
 	if (!oo_call(this, "CanUse", id))
 		return false;
 
@@ -57,7 +57,7 @@ public ItemGrenade@CanBuy(id)
 
 public ItemGrenade@Use(id)
 {
-	new this = oo_this();
+	new this = @this;
 	new weapon = oo_get(this, "weapon_id");
 	if (!user_has_weapon(id, weapon))
 	{

@@ -39,13 +39,13 @@ public oo_init()
 
 public ItemWeapon@Ctor(const class[], const name[], const desc[], cost, limit)
 {
-	oo_set_str(oo_this(), "class", class);
+	oo_set_str(@this, "class", class);
 	oo_super_ctor("HumanItem", name, desc, cost, limit);
 }
 
 public ItemWeapon@CanBuy(id)
 {
-	new this = oo_this();
+	new this = @this;
 	if (!oo_call(this, "CanUse", id))
 		return false;
 
@@ -64,7 +64,7 @@ public ItemWeapon@CanBuy(id)
 
 public ItemWeapon@Use(id)
 {
-	new this = oo_this();
+	new this = @this;
 	static class[32];
 	oo_get_str(this, "class", class, sizeof class);
 

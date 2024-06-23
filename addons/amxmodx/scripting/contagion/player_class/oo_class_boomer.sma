@@ -72,7 +72,7 @@ public PlayerClassInfo:Boomer@GetClassInfo()
 
 public Boomer@OnCmdStart(uc, seed)
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	if (!is_user_alive(id))
@@ -142,13 +142,13 @@ public Boomer@OnCmdStart(uc, seed)
 
 public Boomer@OnKilledBy(attacker, shouldgibs)
 {
-	new this = oo_this();
+	new this = @this;
 	oo_call(this, "Boom", false);
 }
 
 public Boomer@Boom(bool:kill)
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	static Float:origin[3];
@@ -271,7 +271,7 @@ public Boomer@Boom(bool:kill)
 
 public Boomer@CreateSpawnEnt()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	static Float:origin[3];

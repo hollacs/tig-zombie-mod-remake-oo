@@ -8,10 +8,13 @@ new const SECONDARY_WEAPONS[] = {CSW_USP, CSW_P228, CSW_GLOCK18, CSW_FIVESEVEN, 
 public plugin_init()
 {
 	register_plugin("[CTG] BOT Weapons", "0.1", "holla");
+
+	oo_hook_mthd("PlayerClass", "SetProps", "OnPlayerClassSetProps");
 }
 
-public OO_OnPlayerClassSetProps(id)
+public OnPlayerClassSetProps()
 {
+	new id = oo_get(@this, "player_id");
 	if (is_user_bot(id) && oo_playerclass_isa(id, "Human"))
 	{
 		rg_remove_all_items(id);

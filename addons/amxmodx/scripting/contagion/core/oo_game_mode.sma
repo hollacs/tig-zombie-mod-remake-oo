@@ -27,6 +27,8 @@ public plugin_init()
 	RegisterHam(Ham_Touch, "weaponbox", "OnWeaponBoxTouch");
 	RegisterHam(Ham_Touch, "armoury_entity", "OnArmouryTouch");
 	RegisterHam(Ham_Touch, "weapon_shield", "OnShieldTouch");
+
+	oo_hook_mthd("Player", "Respawn", "OnPlayerRespawn");
 }
 
 public plugin_natives()
@@ -82,7 +84,7 @@ public oo_init()
 		oo_mthd(cl, "CanTouchWeapon", @int(id), @int(ent), @int(weapon_id));
 		oo_mthd(cl, "CanPlayerRespawn", @int(id));
 		oo_mthd(cl, "OnPlayerSpawn", @int(id));
-		oo_mthd(cl, "OnPlayerTakeDamage", @int(victim), @int(inflictor), @int(attacker), @fl(damage), @int(damagebits));
+		oo_mthd(cl, "OnPlayerTakeDamage", @int(victim), @int(inflictor), @int(attacker), @ref(damage), @int(damagebits));
 		oo_mthd(cl, "OnPlayerKilled", @int(victim), @int(attacker), @int(shouldgibs));
 		oo_mthd(cl, "OnGiveDefaultItems", @int(id));
 		oo_mthd(cl, "OnThink");
@@ -94,6 +96,7 @@ public oo_init()
 		oo_mthd(cl, "OnChooseTeam", @int(player), @int(slot));
 		oo_mthd(cl, "OnChooseAppearance", @int(player), @int(slot));
 		oo_mthd(cl, "OnPlayerRespawn", @int(player));
+		oo_mthd(cl, "OnClientDisconnect", @int(player));
 
 		oo_smthd(cl, "GetCurrent");
 		oo_smthd(cl, "SetCurrent", @int(mode));
@@ -102,37 +105,37 @@ public oo_init()
 
 public GameMode@Ctor()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_set(this, "is_started", false);
 	oo_set(this, "is_ended", false);
 }
 
 public GameMode@Dtor()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_call(this, "StopThink");
 }
 
 public GameMode@Start()
 {
-	oo_set(oo_this(), "is_started", true);
+	oo_set(@this, "is_started", true);
 }
 
 public GameMode@End()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_set(this, "is_ended", true);
 	oo_call(this, "StopThink");
 }
 
 public GameMode@StartThink(Float:time)
 {
-	set_task_ex(time, "TaskThink", oo_this(), _, _, SetTask_Repeat);
+	set_task_ex(time, "TaskThink", @this, _, _, SetTask_Repeat);
 }
 
 public GameMode@StopThink()
 {
-	remove_task(oo_this());
+	remove_task(@this);
 }
 
 public GameMode@CheckWinConditions()
@@ -142,7 +145,7 @@ public GameMode@CheckWinConditions()
 
 public GameMode@OnThink()
 {
-	new this = oo_this();
+	new this = @this;
 
 	if (!get_member_game(m_bRoundTerminating)
 		&& get_gametime() >= Float:get_member_game(m_fRoundStartTimeReal) + float(get_member_game(m_iRoundTimeSecs)))
@@ -153,12 +156,12 @@ public GameMode@OnThink()
 
 public GameMode@OnRoundEnd(WinStatus:status, ScenarioEventEndRound:event, Float:tmDelay)
 {
-	oo_call(oo_this(), "End");
+	oo_call(@this, "End");
 }
 
 public GameMode@OnRestartRound()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_call(this, "StopThink");
 	oo_call(this, "StartThink", 0.1);
 }
@@ -170,7 +173,7 @@ public GameMode@OnPlayerSpawn(id) {}
 public GameMode@OnPlayerKilled(victim, attacker, shouldgibs) {}
 public GameMode@OnRoundFreezeEnd() {}
 public GameMode@OnRoundTimeExpired() {}
-public GameMode@OnPlayerTakeDamage(victim, inflictor, attacker, Float:damage, damagebits) {}
+public GameMode@OnPlayerTakeDamage(victim, inflictor, attacker, &Float:damage, damagebits) {}
 public GameMode@OnGiveDefaultItems(id) { return false; }
 public GameMode@CanTouchWeapon(id, ent, weapon_id) { return true; }
 public GameMode@OnChooseTeam(id, MenuChooseTeam:slot) {}
@@ -179,8 +182,10 @@ public GameMode@OnChooseAppearance(id, slot) {}
 
 public GameMode@OnPlayerRespawn(id)
 {
-	return oo_call(oo_this(), "CanPlayerRespawn", id) ? true : false;
+	return oo_call(@this, "CanPlayerRespawn", id) ? true : false;
 }
+
+public GameMode@OnClientDisconnect(id) {}
 
 public GameMode:GameMode@GetCurrent()
 {
@@ -268,6 +273,12 @@ public OnPlayerTakeDamage(victim, inflictor, attacker, Float:damage, damagebits)
 	return HC_CONTINUE;
 }
 
+public client_disconnected(id)
+{
+	if (g_oCurrentMode != @null)
+		oo_call(g_oCurrentMode, "OnClientDisconnect", id);
+}
+
 public OnCanHavePlayerItem(id, item)
 {
 	if (g_oCurrentMode != @null)
@@ -314,15 +325,15 @@ public OnShieldTouch(ent, toucher)
 	return HAM_IGNORED;
 }
 
-public OO_OnPlayerRespawn(id)
+public OnPlayerRespawn()
 {
+	new id = oo_get(@this, "player_id");
 	if (g_oCurrentMode != @null)
 	{
-		new r = oo_call(g_oCurrentMode, "OnPlayerRespawn", id) ? PLUGIN_CONTINUE : PLUGIN_HANDLED;
-		return r;
+		return oo_call(g_oCurrentMode, "OnPlayerRespawn", id) ? OO_CONTINUE : OO_SUPERCEDE;
 	}
 
-	return PLUGIN_CONTINUE;
+	return OO_CONTINUE;
 }
 
 public TaskThink(mode_o)

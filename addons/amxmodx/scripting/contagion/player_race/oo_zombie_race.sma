@@ -10,6 +10,9 @@ public plugin_init()
 
 	register_clcmd("say /zclass", "CmdZombieClass");
 
+	oo_hook_mthd("PlayerClass", "Change", "OnPlayerClassChange");
+	oo_hook_dtor("Player", "OnPlayerDtor");
+
 	g_oMenu = oo_new("ZombieRaceMenu");
 	oo_call(g_oMenu, "AddClass", "Zombie");
 }
@@ -47,14 +50,15 @@ public any:ZombieRaceMenu@GetInstance()
 	return g_oMenu;
 }
 
-public OO_OnPlayerClassChange(id, const class[], bool:set_props)
+public OnPlayerClassChange(id, const class[], bool:set_props)
 {
 	return oo_call(g_oMenu, "HandlePlayerClassChange", id, class, set_props) ?
-		PLUGIN_HANDLED : PLUGIN_CONTINUE;
+		OO_SUPERCEDE : OO_CONTINUE;
 }
 
-public OO_OnPlayerDtor(id)
+public OnPlayerDtor()
 {
+	new id = oo_get(@this, "player_id");
 	g_NextZombieRace[id] = @null;
 }
 

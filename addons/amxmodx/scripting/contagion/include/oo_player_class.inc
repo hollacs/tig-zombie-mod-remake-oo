@@ -44,7 +44,7 @@ stock oo_playerclass_set_props(id, bool:set_team=true)
 	new PlayerClass:class_o = oo_playerclass_get(id);
 	if (class_o == @null) return 0;
 
-	return oo_call(class_o, "SetProperties", set_team);
+	return oo_call(class_o, "SetProps", set_team);
 }
 
 stock oo_playerclass_count(const class[], bool:alive=true, bool:super=true)

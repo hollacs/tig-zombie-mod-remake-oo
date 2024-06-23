@@ -27,7 +27,7 @@ public oo_init()
 
 public GameItem@Ctor(const name[], const desc[])
 {
-	new this = oo_this();
+	new this = @this;
 	oo_set_str(this, "name", name);
 	oo_set_str(this, "desc", desc);
 }
@@ -43,10 +43,10 @@ public GameItem@Use() {}
 
 public GameItem@GetName(name[], maxlen)
 {
-	oo_get_str(oo_this(), "name", name, maxlen);
+	oo_get_str(@this, "name", name, maxlen);
 }
 
 public GameItem@GetDesc(name[], maxlen)
 {
-	oo_get_str(oo_this(), "desc", name, maxlen);
+	oo_get_str(@this, "desc", name, maxlen);
 }

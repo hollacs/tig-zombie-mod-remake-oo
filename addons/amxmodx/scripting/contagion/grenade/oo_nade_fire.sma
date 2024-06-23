@@ -93,7 +93,7 @@ public FireNade@Dtor()
 
 public FireNade@SetWorldModel()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_call(this, "Grenade@SetWorldModel");
 
 	new ent = oo_get(this, "ent");
@@ -115,7 +115,7 @@ public FireNade@SetWorldModel()
 
 public FireNade@Detonate()
 {
-	new this = oo_this();
+	new this = @this;
 	new ent = oo_get(this, "ent");
 
 	static Float:origin[3];
@@ -142,7 +142,7 @@ public FireNade@Detonate()
 
 public FireNade@Ignite(victim, times)
 {
-	new this = oo_this();
+	new this = @this;
 	new ent = oo_get(this, "ent");
 	new attacker = get_entvar(ent, var_owner);
 	
@@ -151,7 +151,7 @@ public FireNade@Ignite(victim, times)
 
 public FireNade@DetonateEffect()
 {
-	new this = oo_this();
+	new this = @this;
 	new ent = oo_get(this, "ent");
 
 	new Float:origin[3];

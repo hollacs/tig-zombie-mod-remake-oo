@@ -7,10 +7,13 @@ new g_HasChosen[MAX_PLAYERS + 1];
 public plugin_init()
 {
 	register_plugin("[CTG] Menu: Default Weapons", "0.1", "holla");
+
+	oo_hook_mthd("PlayerClass", "SetProps", "OnPlayerClassSetProps")
 }
 
-public OO_OnPlayerClassSetProps(id, bool:set_team)
+public OnPlayerClassSetProps(bool:set_team)
 {
+	new id = oo_get(@this, "player_id");
 	if (oo_playerclass_isa(id, "Human"))
 	{
 		g_HasChosen[id] = 0;

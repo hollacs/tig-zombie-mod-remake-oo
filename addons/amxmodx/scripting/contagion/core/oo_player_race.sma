@@ -45,7 +45,7 @@ public oo_init()
 
 public PlayerRace@Ctor(PlayerClassInfo:info_o, const class[], const desc[])
 {
-	new this = oo_this();
+	new this = @this;
 	oo_set(this, "info", info_o);
 	oo_set_str(this, "class", class);
 	oo_set_str(this, "desc", desc);
@@ -53,26 +53,26 @@ public PlayerRace@Ctor(PlayerClassInfo:info_o, const class[], const desc[])
 
 public PlayerRace@GetDesc(output[], maxlen)
 {
-	oo_get_str(oo_this(), "desc", output, maxlen);
+	oo_get_str(@this, "desc", output, maxlen);
 }
 
 public PlayerRace@GetName(output[], maxlen)
 {
-	new this = oo_this();
+	new this = @this;
 	new PlayerClassInfo:info_o = any:oo_get(this, "info");
 	oo_get_str(info_o, "name", output, maxlen);
 }
 
 public PlayerRaceMenu@Ctor()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_set(this, "races", ArrayCreate(1));
 	oo_set(this, "classes", TrieCreate());
 }
 
 public PlayerRaceMenu@Dtor()
 {
-	new this = oo_this();
+	new this = @this;
 	new Array:races_a = any:oo_get(this, "races");
 	new Trie:classes_t = any:oo_get(this, "classes");
 	ArrayDestroy(races_a);
@@ -86,7 +86,7 @@ public PlayerRaceMenu@GetTitle(id, output[], maxlen)
 
 public PlayerRaceMenu@GetItemName(id, PlayerRace:race_o, output[], maxlen)
 {
-	new this = oo_this();
+	new this = @this;
 
 	static name[32], desc[32];
 	oo_call(race_o, "GetName", name, charsmax(name));
@@ -102,7 +102,7 @@ public PlayerRaceMenu@GetItemName(id, PlayerRace:race_o, output[], maxlen)
 
 public PlayerRaceMenu@ShowMenu(id)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new Array:races_a = any:oo_get(this, "races");
 
@@ -131,7 +131,7 @@ public PlayerRaceMenu@ShowMenu(id)
 
 public PlayerRaceMenu@HandleMenu(id, menu, item)
 {
-	new this = oo_this();
+	new this = @this;
 	new Array:races_a = any:oo_get(this, "races");
 	new PlayerRace:race_o = any:ArrayGetCell(races_a, item);
 	oo_call(this, "SetPlayerNextRace", id, race_o);
@@ -139,7 +139,7 @@ public PlayerRaceMenu@HandleMenu(id, menu, item)
 
 public PlayerRaceMenu@HandlePlayerClassChange(id, const class[], bool:set_props)
 {
-	new this = oo_this();
+	new this = @this;
 	if (TrieKeyExists(Trie:oo_get(this, "classes"), class))
 	{
 		new Array:races_a = any:oo_get(this, "races");
@@ -157,8 +157,9 @@ public PlayerRaceMenu@HandlePlayerClassChange(id, const class[], bool:set_props)
 		oo_playerclass_set(id, class_o);
 
 		if (set_props)
-			oo_call(class_o, "SetProperties", true);
+			oo_call(class_o, "SetProps", true);
 		
+		oo_hook_set_return(_:class_o);
 		return true;
 	}
 
@@ -174,7 +175,7 @@ public PlayerRaceMenu@SetPlayerNextRace(id, PlayerRace:race_o) {}
 
 public PlayerRaceMenu@AddRace(PlayerRace:race_o)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new Array:races_a = any:oo_get(this, "races");
 	if (!oo_isa(race_o, "PlayerRace"))
@@ -188,7 +189,7 @@ public PlayerRaceMenu@AddRace(PlayerRace:race_o)
 
 public PlayerRaceMenu@AddClass(const class[])
 {
-	new Trie:classes_t = any:oo_get(oo_this(), "classes");
+	new Trie:classes_t = any:oo_get(@this, "classes");
 	TrieSetCell(classes_t, class, 1);
 }
 

@@ -9,6 +9,11 @@
 public plugin_init()
 {
 	register_plugin("[OO] Status: Rampage", "0.1", "holla");
+
+	oo_hook_mthd("Player", "OnKilled", "OnPlayerKilled");
+	oo_hook_mthd("Player", "OnResetMaxSpeed", "OnPlayerResetMaxSpeed");
+	oo_hook_mthd("Player", "OnTakeDamage", "OnPlayerTakeDamage");
+	oo_hook_dtor("PlayerClass", "OnPlayerClassDtor");
 }
 
 public oo_init()
@@ -24,7 +29,7 @@ public oo_init()
 		oo_ctor(cl, "Ctor", @int(player), @fl(duration), @fl(speed), @fl(takedmg));
 		oo_dtor(cl, "Dtor");
 
-		oo_mthd(cl, "GetName", @stringex, @cell);
+		oo_mthd(cl, "GetName", OO_STRING_REF, OO_CELL);
 		oo_mthd(cl, "OnUpdate");
 
 		oo_smthd(cl, "Set", @int(player), @fl(duration), @fl(speed), @fl(takedmg));
@@ -42,7 +47,7 @@ public bool:RampageStatus@Set(id, Float:duration, Float:speed, Float:takedmg)
 
 public RampageStatus@Ctor(player, Float:duration, Float:speed, Float:takedmg)
 {
-	new this = oo_this();
+	new this = @this;
 	oo_super_ctor("PlayerStatus", player);
 
 	oo_set(this, "duration", duration);
@@ -59,7 +64,7 @@ public RampageStatus@Ctor(player, Float:duration, Float:speed, Float:takedmg)
 
 public RampageStatus@Dtor()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 	rg_reset_maxspeed(id);
 	render_pop(id, -1, "rampage"); 
@@ -73,7 +78,7 @@ public RampageStatus@GetName(output[], len)
 
 public RampageStatus@OnUpdate()
 {
-	new this = oo_this();
+	new this = @this;
 	if (get_gametime() >= Float:oo_get(this, "start_time") + Float:oo_get(this, "duration"))
 	{
 		oo_call(this, "Delete");
@@ -88,8 +93,9 @@ public CS_OnPainShock_Post(victim, inflictor, attacker, Float:damage, damagebits
 	}
 }
 
-public OO_OnPlayerResetMaxSpeed(id)
+public OnPlayerResetMaxSpeed()
 {
+	new id = oo_get(@this, "player_id");
 	if (is_user_alive(id))
 	{
 		new PlayerStatus:status_o = oo_playerstatus_get(id, "RampageStatus");
@@ -100,8 +106,9 @@ public OO_OnPlayerResetMaxSpeed(id)
 	}
 }
 
-public OO_OnPlayerTakeDamage(id, inflictor, attacker, Float:damage, damagebits)
+public OnPlayerTakeDamage(inflictor, attacker, &Float:damage, damagebits)
 {
+	new id = oo_get(@this, "player_id");
 	if (inflictor == attacker && is_user_connected(attacker))
 	{
 		new PlayerStatus:status_o = oo_playerstatus_get(id, "RampageStatus");
@@ -112,13 +119,15 @@ public OO_OnPlayerTakeDamage(id, inflictor, attacker, Float:damage, damagebits)
 	}
 }
 
-public OO_OnPlayerKilled(id)
+public OnPlayerKilled()
 {
+	new id = oo_get(@this, "player_id");
 	oo_playerstatus_remove(id, "RampageStatus");
 }
 
-public OO_OnPlayerClassDtor(id)
+public OnPlayerClassDtor()
 {
+	new id = oo_get(@this, "player_id");
 	oo_playerstatus_remove(id, "RampageStatus");
 }
 

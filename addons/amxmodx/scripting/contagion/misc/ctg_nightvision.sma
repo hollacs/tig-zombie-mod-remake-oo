@@ -19,7 +19,13 @@ public plugin_init()
 {
 	register_plugin("[CTG] Night Vision", "0.1", "holla");
 
+	oo_hook_mthd("PlayerClass", "SetProps", "OnPlayerClassSetProps");
+
 	register_clcmd("nightvision", "CmdNightVision");
+
+	oo_hook_mthd("Player", "OnKilled", "OnPlayerKilled");
+	oo_hook_mthd("Player", "OnSpawn", "OnPlayerSpawn");
+	oo_hook_mthd("Player", "OnPreThink", "OnPlayerPreThink");
 }
 
 public plugin_natives()
@@ -67,28 +73,32 @@ public native_nightvision_toggle()
 	NightVisionToggle(id, bool:get_param(2));
 }
 
-public OO_OnPlayerKilled(id)
+public OnPlayerKilled()
 {
+	new id = oo_get(@this, "player_id");
 	g_NightVisionOn[id] = false;
 	g_HasNightVision[id] = false;
 	g_NextUpdateTime[id] = 0.0;
 }
 
-public OO_OnPlayerSpawn(id)
+public OnPlayerSpawn()
 {
+	new id = oo_get(@this, "player_id");
 	g_NightVisionOn[id] = false;
 }
 
-public OO_OnPlayerClassSetProps(id, bool:set_team)
+public OnPlayerClassSetProps(bool:set_team)
 {
+	new id = oo_get(@this, "player_id");
 	if (oo_playerclass_isa(id, "Human"))
 		g_HasNightVision[id] = false;
 	else if (oo_playerclass_isa(id, "Zombie"))
 		g_HasNightVision[id] = true;
 }
 
-public OO_OnPlayerPreThink(id)
+public OnPlayerPreThink()
 {
+	new id = oo_get(@this, "player_id");
 	if (is_user_alive(id) && !g_HasNightVision[id])
 		return;
 

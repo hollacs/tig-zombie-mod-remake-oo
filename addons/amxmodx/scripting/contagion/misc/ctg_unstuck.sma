@@ -7,10 +7,13 @@
 public plugin_init()
 {
 	register_plugin("[CTG] Unstuck", "0.1", "holla");
+
+	oo_hook_mthd("PlayerClass", "SetProps", "OnPlayerClassSetProps");
 }
 
-public OO_OnPlayerClassSetProps(id)
+public OnPlayerClassSetProps()
 {
+	new id = oo_get(@this, "player_id");
 	if (IsPlayerStuck(id))
 	{
 		csdm_spawn(id);

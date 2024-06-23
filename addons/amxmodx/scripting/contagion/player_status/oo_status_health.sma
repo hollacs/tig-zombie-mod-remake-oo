@@ -6,6 +6,9 @@
 public plugin_init()
 {
 	register_plugin("[OO] Status: Health", "0.1", "holla");
+
+	oo_hook_mthd("Player", "OnKilled", "OnPlayerKilled");
+	oo_hook_mthd("Player", "OnSpawn", "OnPlayerSpawn");
 }
 
 public oo_init()
@@ -13,7 +16,7 @@ public oo_init()
 	oo_class("HealthStatus", "PlayerStatus")
 	{
 		new cl[] = "HealthStatus";
-		oo_mthd(cl, "GetName", @stringex, @cell);
+		oo_mthd(cl, "GetName", OO_STRING_REF, OO_CELL);
 	}
 }
 
@@ -43,12 +46,14 @@ public HealthStatus@GetName(output[], len)
 	return formatex(output, len, "Fine");
 }
 
-public OO_OnPlayerSpawn(id)
+public OnPlayerSpawn()
 {
+	new id = oo_get(@this, "player_id");
 	oo_playerstatus_add(id, oo_new("HealthStatus", id));
 }
 
-public OO_OnPlayerKilled(id)
+public OnPlayerKilled()
 {
+	new id = oo_get(@this, "player_id");
 	oo_playerstatus_remove(id, "HealthStatus");
 }

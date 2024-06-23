@@ -81,7 +81,7 @@ public InfectionNade@Dtor()
 
 public InfectionNade@SetWorldModel()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_call(this, "Grenade@SetWorldModel");
 
 	new ent = oo_get(this, "ent");
@@ -103,7 +103,7 @@ public InfectionNade@SetWorldModel()
 
 public InfectionNade@Detonate()
 {
-	new this = oo_this();
+	new this = @this;
 	new ent = oo_get(this, "ent");
 	new attacker = get_entvar(ent, var_owner);
 
@@ -140,7 +140,7 @@ public InfectionNade@Detonate()
 
 public InfectionNade@DetonateEffect()
 {
-	new this = oo_this();
+	new this = @this;
 	new ent = oo_get(this, "ent");
 
 	static Float:origin[3];

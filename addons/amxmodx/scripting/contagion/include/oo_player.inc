@@ -5,19 +5,7 @@
 
 #include <oo>
 
-#define CHECK_PLAYER(%0) new Player:%0 = oo_player_get(id); if (%0 == @null)
-
-forward OO_OnPlayerAllocate(id);
-forward OO_OnPlayerCtor(id);
-forward OO_OnPlayerDtor(id);
-forward OO_OnPlayerSpawn(id);
-forward OO_OnPlayerPreThink(id);
-forward OO_OnPlayerTakeDamage(id, inflictor, attacker, Float:damage, damagebits);
-forward OO_OnPlayerTraceAttack(id, attacker, Float:damage, Float:dir[3], tr, damagebit);
-forward OO_OnPlayerTraceAttack_Post(id, attacker, Float:damage, Float:dir[3], tr, damagebit);
-forward OO_OnPlayerKilled(id, attacker, shouldgibs);
-forward OO_OnPlayerResetMaxSpeed(id);
-forward OO_OnPlayerRespawn(id);
+#define CHECK_PLAYER(%0) 	new Player:%0 = oo_player_get(id); if (%0 == @null)
 
 native any:oo_player_get(id);
 native oo_player_set(id, any:player_o);

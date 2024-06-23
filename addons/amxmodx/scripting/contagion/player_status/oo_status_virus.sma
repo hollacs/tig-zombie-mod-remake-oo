@@ -10,6 +10,9 @@ public plugin_init()
 {
 	register_plugin("[OO] Status: Virus", "0.1", "holla");
 
+	oo_hook_mthd("Player", "OnKilled", "OnPlayerKilled");
+	oo_hook_dtor("PlayerClass", "OnPlayerClassDtor");
+
 	register_clcmd("hahajai", "Cmd");
 }
 
@@ -58,12 +61,12 @@ public VirusStatus@Ctor(player, attacker, Float:interval, Float:damage, times)
 {
 	oo_super_ctor("PlayerStatus", player);
 	oo_super_ctor("SustainedDamage", player, attacker, interval, damage, times);
-	oo_set(oo_this(), "next_cough_time", get_gametime() + 4.0);
+	oo_set(@this, "next_cough_time", get_gametime() + 4.0);
 }
 
 public VirusStatus@OnUpdate()
 {
-	new this = oo_this();
+	new this = @this;
 
 	new Float:gametime = get_gametime();
 	if (gametime >= Float:oo_get(this, "next_cough_time"))
@@ -85,7 +88,7 @@ public VirusStatus@OnUpdate()
 
 public VirusStatus@Damage()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	if (oo_call(this, "SustainedDamage@Damage"))
@@ -110,7 +113,7 @@ public VirusStatus@Damage()
 
 public VirusStatus@Death()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 	new attacker = oo_get(this, "attacker");
 
@@ -120,7 +123,7 @@ public VirusStatus@Death()
 
 public VirusStatus@Delete()
 {
-	oo_call(oo_this(), "PlayerStatus@Delete");
+	oo_call(@this, "PlayerStatus@Delete");
 }
 
 public VirusStatus@GetName(output[], maxlen)
@@ -128,12 +131,14 @@ public VirusStatus@GetName(output[], maxlen)
 	return formatex(output, maxlen, "Virus");
 }
 
-public OO_OnPlayerKilled(id)
+public OnPlayerKilled()
 {
+	new id = oo_get(@this, "player_id");
 	oo_playerstatus_remove(id, "VirusStatus");
 }
 
-public OO_OnPlayerClassDtor(id)
+public OnPlayerClassDtor()
 {
+	new id = oo_get(@this, "player_id");
 	oo_playerstatus_remove(id, "VirusStatus");
 }

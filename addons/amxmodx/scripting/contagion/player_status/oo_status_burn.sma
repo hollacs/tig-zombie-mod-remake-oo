@@ -22,6 +22,9 @@ public plugin_init()
 {
 	register_plugin("[OO] Status: Burn", "0.1", "holla");
 
+	oo_hook_mthd("Player", "OnKilled", "OnPlayerKilled");
+	oo_hook_dtor("PlayerClass", "OnPlayerClassDtor");
+
 	sprite_smoke = AssetsGetSprite(g_oAssets, "smoke");
 	AssetsGetModel(g_oAssets, "flame", model_flame, charsmax(model_flame));
 }
@@ -65,7 +68,7 @@ public BurnStatus@Add(player, attacker, Float:interval, Float:damage, times)
 
 public BurnStatus@Ctor(player, attacker, Float:interval, Float:damage, times)
 {
-	new this = oo_this();
+	new this = @this;
 	oo_super_ctor("PlayerStatus", player);
 	oo_super_ctor("SustainedDamage", player, attacker, interval, damage, times);
 
@@ -75,13 +78,14 @@ public BurnStatus@Ctor(player, attacker, Float:interval, Float:damage, times)
 
 public BurnStatus@Dtor()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_call(this, "RemoveFlame");
+	//server_print("burn dtor");
 }
 
 public BurnStatus@OnUpdate()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	if (get_entvar(id, var_flags) & FL_INWATER)
@@ -89,12 +93,14 @@ public BurnStatus@OnUpdate()
 		oo_set(this, "killme", true);
 	}
 
+	//server_print("ON UPDATE FIRE(%d)", id);
+
 	oo_call(this, "SustainedDamage@OnUpdate");
 }
 
 public BurnStatus@CreateFlame()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	new ent = rg_create_entity("env_sprite");
@@ -119,7 +125,7 @@ public BurnStatus@CreateFlame()
 
 public BurnStatus@RemoveFlame()
 {
-	new this = oo_this();
+	new this = @this;
 
 	new ent = oo_get(this, "ent");
 	remove_entity(ent);
@@ -145,7 +151,7 @@ public BurnStatus@RemoveFlame()
 
 public BurnStatus@Damage()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	if (oo_call(this, "SustainedDamage@Damage"))
@@ -170,7 +176,7 @@ public BurnStatus@Damage()
 
 public BurnStatus@Delete()
 {
-	oo_call(oo_this(), "PlayerStatus@Delete");
+	oo_call(@this, "PlayerStatus@Delete");
 }
 
 public BurnStatus@GetName(output[], maxlen)
@@ -178,12 +184,14 @@ public BurnStatus@GetName(output[], maxlen)
 	return formatex(output, maxlen, "Burn");
 }
 
-public OO_OnPlayerKilled(id)
+public OnPlayerKilled()
 {
+	new id = oo_get(@this, "player_id");
 	oo_playerstatus_remove(id, "BurnStatus");
 }
 
-public OO_OnPlayerClassDtor(id)
+public OnPlayerClassDtor()
 {
+	new id = oo_get(@this, "player_id");
 	oo_playerstatus_remove(id, "BurnStatus");
 }

@@ -3,32 +3,12 @@
 #include <hamsandwich>
 #include <oo>
 
-enum _:Forward_e
-{
-	FW_ALLOCATE,
-	FW_CTOR,
-	FW_DTOR,
-	FW_SPAWN,
-	FW_PRETHINK,
-	FW_TAKEDAMAGE,
-	FW_TRACEATTACK,
-	FW_TRACEATTACK_POST,
-	FW_KILLED,
-	FW_RESETMAXSPEED,
-	FW_RESPAWN,
-};
-
 enum (+=100)
 {
 	TASK_RESPAWN = 0,
 };
 
-
 new Player:g_oPlayer[MAX_PLAYERS + 1] = {@null, ...};
-
-new g_Forward[Forward_e];
-new g_ForwardResult;
-
 
 public plugin_init()
 {
@@ -41,152 +21,6 @@ public plugin_init()
 	RegisterHookChain(RG_CBasePlayer_TakeDamage, 	"OnPlayerTakeDamage");
 	RegisterHookChain(RG_CBasePlayer_TraceAttack, 	"OnPlayerTraceAttack");
 	RegisterHookChain(RG_CBasePlayer_TraceAttack, 	"OnPlayerTraceAttack_Post", 1);
-
-	g_Forward[FW_ALLOCATE] 		= CreateMultiForward("OO_OnPlayerAllocate", ET_CONTINUE, FP_CELL);
-	g_Forward[FW_CTOR] 			= CreateMultiForward("OO_OnPlayerCtor", ET_IGNORE, FP_CELL);
-	g_Forward[FW_DTOR] 			= CreateMultiForward("OO_OnPlayerDtor", ET_IGNORE, FP_CELL);
-	g_Forward[FW_SPAWN] 		= CreateMultiForward("OO_OnPlayerSpawn", ET_IGNORE, FP_CELL);
-	g_Forward[FW_TAKEDAMAGE]	= CreateMultiForward("OO_OnPlayerTakeDamage", ET_CONTINUE, FP_CELL, FP_CELL, FP_CELL, FP_FLOAT, FP_CELL);
-	g_Forward[FW_TRACEATTACK]	= CreateMultiForward("OO_OnPlayerTraceAttack", ET_CONTINUE, FP_CELL, FP_CELL, FP_FLOAT, FP_ARRAY, FP_CELL, FP_CELL);
-	g_Forward[FW_TRACEATTACK_POST]	= CreateMultiForward("OO_OnPlayerTraceAttack_Post", ET_IGNORE, FP_CELL, FP_CELL, FP_FLOAT, FP_ARRAY, FP_CELL, FP_CELL);
-	g_Forward[FW_PRETHINK] 		= CreateMultiForward("OO_OnPlayerPreThink", ET_CONTINUE, FP_CELL);
-	g_Forward[FW_KILLED] 		= CreateMultiForward("OO_OnPlayerKilled", ET_CONTINUE, FP_CELL, FP_CELL, FP_CELL);
-	g_Forward[FW_RESETMAXSPEED] = CreateMultiForward("OO_OnPlayerResetMaxSpeed", ET_CONTINUE, FP_CELL);
-	g_Forward[FW_RESPAWN] 		= CreateMultiForward("OO_OnPlayerRespawn", ET_CONTINUE, FP_CELL);
-}
-
-
-public oo_init()
-{
-	oo_class("Player")
-	{
-		new cl[] = "Player";
-		oo_var(cl, "player_id", 1);
-		oo_var(cl, "max_health", 1);
-		oo_var(cl, "max_armor", 1);
-		oo_var(cl, "respawn_after", 1);
-
-		oo_ctor(cl, "Ctor", @int(id));
-		oo_dtor(cl, "Dtor");
-
-		oo_mthd(cl, "OnPreThink");
-		oo_mthd(cl, "OnSpawn");
-		oo_mthd(cl, "OnTakeDamage", @int(inflictor), @int(attacker), @fl(damage), @int(damagebits));
-		oo_mthd(cl, "OnTraceAttack", @int(attacker), @fl(damage), @arr(dir[3]), @int(tr), @int(damagebits));
-		oo_mthd(cl, "OnTraceAttack_Post", @int(attacker), @fl(damage), @arr(dir[3]), @int(tr), @int(damagebits));
-		oo_mthd(cl, "OnKilled", @int(killer), @int(shouldgib));
-		oo_mthd(cl, "OnResetMaxSpeed");
-
-		oo_mthd(cl, "SetRespawn", @fl(time));
-		oo_mthd(cl, "ResetRespawn");
-		oo_mthd(cl, "IsRespawnPending");
-		oo_mthd(cl, "GetRespawnTime");
-		oo_mthd(cl, "Respawn");
-	}
-}
-
-public Player@Ctor(player)
-{
-	new this = oo_this();
-	oo_set(this, "player_id", player);
-	oo_set(this, "max_health", 100);
-	oo_set(this, "max_armor", 100);
-
-	ExecuteForward(g_Forward[FW_CTOR], g_ForwardResult, player);
-}
-
-public Player@Dtor()
-{
-	new id = oo_get(oo_this(), "player_id");
-	remove_task(id + TASK_RESPAWN);
-	ExecuteForward(g_Forward[FW_DTOR], g_ForwardResult, id);
-}
-
-public Player@OnSpawn()
-{
-	new id = oo_get(oo_this(), "player_id");
-	remove_task(id + TASK_RESPAWN);
-	ExecuteForward(g_Forward[FW_SPAWN], g_ForwardResult, id);
-}
-
-public Player@OnPreThink()
-{
-	new id = oo_get(oo_this(), "player_id");
-	ExecuteForward(g_Forward[FW_PRETHINK], g_ForwardResult, id);
-	return g_ForwardResult;
-}
-
-public Player@OnTakeDamage(inflictor, attacker, Float:damage, damagebits)
-{
-	new id = oo_get(oo_this(), "player_id");
-	ExecuteForward(g_Forward[FW_TAKEDAMAGE], g_ForwardResult, id, inflictor, attacker, damage, damagebits);
-	return g_ForwardResult;
-}
-
-public Player@OnTraceAttack(attacker, Float:damage, Float:dir[3], tr, damagebits)
-{
-	new victim = oo_get(oo_this(), "player_id");
-	new arr = PrepareArray(_:dir, sizeof dir, 1);
-	ExecuteForward(g_Forward[FW_TRACEATTACK], g_ForwardResult, victim, attacker, damage, arr, tr, damagebits);
-	return g_ForwardResult;
-}
-
-public Player@OnTraceAttack_Post(attacker, Float:damage, Float:dir[3], tr, damagebits)
-{
-	new victim = oo_get(oo_this(), "player_id");
-	new arr = PrepareArray(_:dir, sizeof dir, 1);
-	ExecuteForward(g_Forward[FW_TRACEATTACK_POST], g_ForwardResult, victim, attacker, damage, arr, tr, damagebits);
-}
-
-public Player@OnKilled(attacker, shouldgibs)
-{
-	new id = oo_get(oo_this(), "player_id");
-	ExecuteForward(g_Forward[FW_KILLED], g_ForwardResult, id, attacker, shouldgibs);
-	return g_ForwardResult;
-}
-
-public Player@OnResetMaxSpeed()
-{
-	new id = oo_get(oo_this(), "player_id");
-	ExecuteForward(g_Forward[FW_RESETMAXSPEED], g_ForwardResult, id);
-	return g_ForwardResult;
-}
-
-public Player@SetRespawn(Float:time)
-{
-	new this = oo_this();
-	oo_set(this, "respawn_after", get_gametime() + time);
-
-	new id = oo_get(this, "player_id");
-	remove_task(id + TASK_RESPAWN);
-	set_task(time, "RespawnPlayer", id + TASK_RESPAWN);
-}
-
-public Player@ResetRespawn()
-{
-	new this = oo_this();
-	new id = oo_get(this, "player_id");
-	oo_set(this, "respawn_after", 0.0);
-	remove_task(id + TASK_RESPAWN);
-}
-
-public Player@IsRespawnPending()
-{
-	new id = oo_get(oo_this(), "player_id");
-	return task_exists(id + TASK_RESPAWN);
-}
-
-public Float:Player@GetRespawnTime()
-{
-	return Float:oo_get(oo_this(), "respawn_after");
-}
-
-public Player@Respawn()
-{
-	new id = oo_get(oo_this(), "player_id");
-	ExecuteForward(g_Forward[FW_RESPAWN], g_ForwardResult, id);
-	if (g_ForwardResult == PLUGIN_CONTINUE)
-		rg_round_respawn(id);
 }
 
 public plugin_natives()
@@ -238,16 +72,130 @@ public native_set()
 	return true;
 }
 
+public oo_init()
+{
+	oo_class("Player")
+	{
+		new cl[] = "Player";
+		oo_var(cl, "player_id", 1);
+		oo_var(cl, "max_health", 1);
+		oo_var(cl, "max_armor", 1);
+		oo_var(cl, "respawn_after", 1);
+
+		oo_ctor(cl, "Ctor", @int(id));
+		oo_dtor(cl, "Dtor");
+
+		oo_mthd(cl, "OnPreThink");
+		oo_mthd(cl, "OnSpawn");
+		oo_mthd(cl, "OnTakeDamage", @int(inflictor), @int(attacker), @ref(damage), @int(damagebits));
+		oo_mthd(cl, "OnTraceAttack", @int(attacker), @ref(damage), @arr(dir[3]), @int(tr), @int(damagebits));
+		oo_mthd(cl, "OnTraceAttack_Post", @int(attacker), @fl(damage), @arr(dir[3]), @int(tr), @int(damagebits));
+		oo_mthd(cl, "OnKilled", @int(killer), @int(shouldgib));
+		oo_mthd(cl, "OnResetMaxSpeed");
+
+		oo_mthd(cl, "SetRespawn", @fl(time));
+		oo_mthd(cl, "ResetRespawn");
+		oo_mthd(cl, "IsRespawnPending");
+		oo_mthd(cl, "GetRespawnTime");
+		oo_mthd(cl, "Respawn");
+
+		oo_smthd(cl, "New", @int(id));
+	}
+}
+
+public Player@Ctor(player)
+{
+	new this = @this;
+	oo_set(this, "player_id", player);
+	oo_set(this, "max_health", 100);
+	oo_set(this, "max_armor", 100);
+}
+
+public Player@Dtor()
+{
+	new id = oo_get(@this, "player_id");
+	remove_task(id + TASK_RESPAWN);
+}
+
+public Player@OnSpawn()
+{
+	new id = oo_get(@this, "player_id");
+	remove_task(id + TASK_RESPAWN);
+}
+
+public Player@OnPreThink()
+{
+	return HC_CONTINUE;
+}
+
+public Player@OnTakeDamage(inflictor, attacker, &Float:damage, damagebits)
+{
+	return HC_CONTINUE;
+}
+
+public Player@OnTraceAttack(attacker, &Float:damage, Float:dir[3], tr, damagebits)
+{
+	return HC_CONTINUE;
+}
+
+public Player@OnTraceAttack_Post(attacker, Float:damage, Float:dir[3], tr, damagebits)
+{
+}
+
+public Player@OnKilled(attacker, shouldgibs)
+{
+	return HC_CONTINUE;
+}
+
+public Player@OnResetMaxSpeed()
+{
+}
+
+public Player@SetRespawn(Float:time)
+{
+	new this = @this;
+	oo_set(this, "respawn_after", get_gametime() + time);
+
+	new id = oo_get(this, "player_id");
+	remove_task(id + TASK_RESPAWN);
+	set_task(time, "RespawnPlayer", id + TASK_RESPAWN);
+}
+
+public Player@ResetRespawn()
+{
+	new this = @this;
+	new id = oo_get(this, "player_id");
+	oo_set(this, "respawn_after", 0.0);
+	remove_task(id + TASK_RESPAWN);
+}
+
+public Player@IsRespawnPending()
+{
+	new id = oo_get(@this, "player_id");
+	return task_exists(id + TASK_RESPAWN);
+}
+
+public Float:Player@GetRespawnTime()
+{
+	return Float:oo_get(@this, "respawn_after");
+}
+
+public Player@Respawn()
+{
+	new id = oo_get(@this, "player_id");
+	rg_round_respawn(id);
+}
+
+public Player@New(id)
+{
+	g_oPlayer[id] = oo_new("Player", id);
+}
 
 public client_putinserver(id)
 {	
 	if (g_oPlayer[id] == @null)
 	{
-		ExecuteForward(g_Forward[FW_ALLOCATE], g_ForwardResult, id);
-		if (g_ForwardResult == PLUGIN_HANDLED)
-			return;
-
-		g_oPlayer[id] = oo_new("Player", id);
+		oo_call(0, "Player@New", id)
 	}
 }
 

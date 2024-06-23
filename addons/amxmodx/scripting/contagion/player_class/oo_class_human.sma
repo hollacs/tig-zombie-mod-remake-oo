@@ -44,23 +44,23 @@ public oo_init()
 		oo_mthd(cl, "GetClassInfo");
 		oo_mthd(cl, "SetTeam");
 		oo_mthd(cl, "GetArmorDefense");
-		oo_mthd(cl, "CanKnifeKnockBack", @cell, @cell);
-		oo_mthd(cl, "GetWeaponMaxBpAmmo", @cell);
-		oo_mthd(cl, "GetWeaponDamage", @cell);
-		oo_mthd(cl, "OnTakeDamage", @cell, @cell, @byref, @cell);
-		oo_mthd(cl, "OnGiveDamage", @cell, @cell, @byref, @cell);
-		oo_mthd(cl, "OnTraceAttack_Post", @cell, @float, @array[3], @cell, @cell);
-		oo_mthd(cl, "OnPainShock", @cell, @float, @byref);
-		oo_mthd(cl, "OnKnifeAttack1", @cell);
-		oo_mthd(cl, "OnKnifeAttack2", @cell);
-		oo_mthd(cl, "OnKnifeAttack1_Post", @cell);
-		oo_mthd(cl, "OnKnifeAttack2_Post", @cell);
+		oo_mthd(cl, "CanKnifeKnockBack", OO_CELL, OO_CELL);
+		oo_mthd(cl, "GetWeaponMaxBpAmmo", OO_CELL);
+		oo_mthd(cl, "GetWeaponDamage", OO_CELL);
+		oo_mthd(cl, "OnTakeDamage", OO_CELL, OO_CELL, OO_BYREF, OO_CELL);
+		oo_mthd(cl, "OnGiveDamage", OO_CELL, OO_CELL, OO_BYREF, OO_CELL);
+		oo_mthd(cl, "OnTraceAttack_Post", OO_CELL, OO_FLOAT, OO_ARRAY[3], OO_CELL, OO_CELL);
+		oo_mthd(cl, "OnPainShock", OO_CELL, OO_FLOAT, OO_BYREF);
+		oo_mthd(cl, "OnKnifeAttack1", OO_CELL);
+		oo_mthd(cl, "OnKnifeAttack2", OO_CELL);
+		oo_mthd(cl, "OnKnifeAttack1_Post", OO_CELL);
+		oo_mthd(cl, "OnKnifeAttack2_Post", OO_CELL);
 	}
 }
 
 public HumanClassInfo@CreateCvars()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_call(this, "CreateCvar", "ctg_human", "health", "100");
 	oo_call(this, "CreateCvar", "ctg_human", "armor", "0");
 	oo_call(this, "CreateCvar", "ctg_human", "max_armor", "100");
@@ -102,13 +102,13 @@ public PlayerClassInfo:Human@GetClassInfo()
 
 public Human@SetTeam()
 {
-	new id = oo_get(oo_this(), "player_id");
+	new id = oo_get(@this, "player_id");
 	rg_set_user_team(id, TEAM_CT, MODEL_UNASSIGNED, true, true);
 }
 
 public Float:Human@GetArmorDefense()
 {
-	new this = oo_this();
+	new this = @this;
 
 	new pcvar = oo_call(this, "GetCvarPtr", "armor_defense");
 	if (pcvar)
@@ -119,7 +119,7 @@ public Float:Human@GetArmorDefense()
 
 public Human@GetWeaponMaxBpAmmo(weapon)
 {
-	new this = oo_this();
+	new this = @this;
 
 	static weapon_name[32], cvar_name[32];
 	rg_get_weapon_info(weapon, WI_NAME, weapon_name, charsmax(weapon_name));
@@ -140,7 +140,7 @@ public Human@GetWeaponMaxBpAmmo(weapon)
 
 public Float:Human@GetWeaponDamage(weapon)
 {
-	new this = oo_this();
+	new this = @this;
 
 	static weapon_name[32], cvar_name[32];
 	rg_get_weapon_info(weapon, WI_NAME, weapon_name, charsmax(weapon_name));
@@ -179,7 +179,7 @@ public Float:Human@GetWeaponDamage(weapon)
 
 public Human@OnGiveDamage(inflictor, victim, &Float:damage, damagebits)
 {
-	new this = oo_this();
+	new this = @this;
 	new attacker = oo_get(this, "player_id");
 
 	if (inflictor == attacker && (damagebits & DMG_BULLET) && oo_playerclass_isa(victim, "Zombie"))
@@ -198,7 +198,7 @@ public Human@OnGiveDamage(inflictor, victim, &Float:damage, damagebits)
 
 public Human@OnTakeDamage(inflictor, attacker, &Float:damage, damagebits)
 {
-	new this = oo_this();
+	new this = @this;
 	new victim = oo_get(this, "player_id");
 
 	if ((1 <= attacker <= MaxClients) && oo_playerclass_isa(attacker, "Zombie"))
@@ -261,7 +261,7 @@ public Human@OnTraceAttack_Post(victim, Float:damage, Float:dir[3], tr, damagebi
 	if (!oo_playerclass_isa(victim, "Zombie"))
 		return HC_CONTINUE;
 
-	new this = oo_this();
+	new this = @this;
 	new attacker = oo_get(this, "player_id");
 	
 	if (get_user_weapon(attacker) == CSW_KNIFE)
@@ -300,7 +300,7 @@ public Human@OnTraceAttack_Post(victim, Float:damage, Float:dir[3], tr, damagebi
 
 public Human@OnPainShock(attacker, Float:damage, &Float:value)
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	new pcvar_painshock = oo_call(this, "GetCvarPtr", "painshock");
@@ -321,7 +321,7 @@ public Human@OnPainShock(attacker, Float:damage, &Float:value)
 
 public Human@OnKnifeAttack1(ent)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new PlayerClassInfo:info_o = any:oo_call(this, "GetClassInfo");
 	if (info_o == @null)
@@ -344,7 +344,7 @@ public Human@OnKnifeAttack1(ent)
 
 public Human@OnKnifeAttack2(ent)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new PlayerClassInfo:info_o = any:oo_call(this, "GetClassInfo");
 	if (info_o == @null)

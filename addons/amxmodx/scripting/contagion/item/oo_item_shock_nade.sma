@@ -25,7 +25,7 @@ public oo_init()
 
 public ItemShockNade@CanBuy(id)
 {
-	new this = oo_this();
+	new this = @this;
 	if (!oo_call(this, "CanUse", id))
 		return false;
 

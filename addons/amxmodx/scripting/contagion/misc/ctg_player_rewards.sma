@@ -16,6 +16,10 @@ public plugin_init()
 {
 	register_plugin("[CTG] Player Rewards", "0.1", "holla");
 
+	oo_hook_mthd("Player", "OnTakeDamage", "OnPlayerTakeDamage");
+	oo_hook_mthd("Player", "OnKilled", "OnPlayerKilled");
+	oo_hook_mthd("PlayerClass", "Change", "OnPlayerClassChange");
+
 	bind_pcvar_num(create_cvar("ctg_kill_boss_xp", "200"), cvar_kill_boss_xp);
 	bind_pcvar_num(create_cvar("ctg_kill_special_xp", "50"), cvar_kill_special_xp);
 	bind_pcvar_num(create_cvar("ctg_kill_zombie_xp", "10"), cvar_kill_zombie_xp);
@@ -32,13 +36,14 @@ public plugin_init()
 	bind_pcvar_num(create_cvar("ctg_damage_human_xp", "10"), cvar_damage_human_xp);
 }
 
-public OO_OnPlayerClassChange(id, const class[], bool:set_props)
+public OnPlayerClassChange(id, const class[], bool:set_props)
 {
 	g_Damage[id] = 0.0;
 }
 
-public OO_OnPlayerTakeDamage(victim, inflictor, attacker, Float:damage, damagebits)
+public OnPlayerTakeDamage(inflictor, attacker, &Float:damage, damagebits)
 {
+	new victim = oo_get(@this, "player_id");
 	if (inflictor != attacker || !(damagebits & DMG_BULLET) || !is_user_connected(attacker))
 		return;
 	
@@ -53,13 +58,13 @@ public OO_OnPlayerTakeDamage(victim, inflictor, attacker, Float:damage, damagebi
 	if (g_Damage[attacker] >= damage_amount)
 	{
 		g_Damage[attacker] = 0.0;
-
 		ctg_add_player_exp(attacker, (is_zombie) ? cvar_damage_zombie_xp : cvar_damage_human_xp, true);
 	}
 }
 
-public OO_OnPlayerKilled(victim, killer)
+public OnPlayerKilled(killer)
 {
+	new victim = oo_get(@this, "player_id");
 	if (!is_user_connected(killer) || get_member(victim, m_iTeam) == get_member(killer, m_iTeam))
 		return;
 	

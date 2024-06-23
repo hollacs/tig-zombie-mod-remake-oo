@@ -6,15 +6,6 @@
 #include <json>
 #include <oo_player>
 
-enum _:Forward_e
-{
-	FW_CTOR,
-	FW_DTOR,
-	FW_SET_PROPS,
-	FW_CHANGE_CLASS,
-	FW_CHANGE_CLASS_POST,
-};
-
 enum _:PlayerModel_e
 {
 	PM_Model[32],
@@ -23,10 +14,6 @@ enum _:PlayerModel_e
 
 
 new PlayerClass:g_oPlayerClass[MAX_PLAYERS + 1];
-
-new g_Forward[Forward_e];
-new g_ForwardResult;
-
 new Trie:g_tItemDeploy;
 
 public plugin_precache()
@@ -43,11 +30,14 @@ public plugin_init()
 
 	register_concmd("oo_playerclass", "CmdPlayerClass", ADMIN_BAN);
 
-	g_Forward[FW_CTOR] 				= CreateMultiForward("OO_OnPlayerClassCtor", ET_IGNORE, FP_CELL);
-	g_Forward[FW_DTOR] 				= CreateMultiForward("OO_OnPlayerClassDtor", ET_IGNORE, FP_CELL);
-	g_Forward[FW_SET_PROPS] 		= CreateMultiForward("OO_OnPlayerClassSetProps", ET_IGNORE, FP_CELL, FP_CELL);
-	g_Forward[FW_CHANGE_CLASS] 		= CreateMultiForward("OO_OnPlayerClassChange", ET_CONTINUE, FP_CELL, FP_STRING, FP_CELL);
-	g_Forward[FW_CHANGE_CLASS_POST] = CreateMultiForward("OO_OnPlayerClassChange_Post", ET_IGNORE, FP_CELL, FP_STRING, FP_CELL);
+	oo_hook_mthd("Player", "OnPreThink", "OnPlayerPreThink");
+	oo_hook_mthd("Player", "OnSpawn", "OnPlayerSpawn");
+	oo_hook_mthd("Player", "OnTakeDamage", "OnPlayerTakeDamage");
+	oo_hook_mthd("Player", "OnTraceAttack", "OnPlayerTraceAttack");
+	oo_hook_mthd("Player", "OnTraceAttack_Post", "OnPlayerTraceAttack_Post");
+	oo_hook_mthd("Player", "OnResetMaxSpeed", "OnPlayerResetMaxSpeed");
+	oo_hook_mthd("Player", "OnKilled", "OnPlayerKilled");
+	oo_hook_dtor("Player", "OnPlayerDtor");
 }
 
 public oo_init()
@@ -85,7 +75,7 @@ public oo_init()
 		oo_mthd(cl, "GetCvarPtr", @str(cvar_name));
 		oo_mthd(cl, "GetClassInfo");
 		oo_mthd(cl, "GetClassName", @stref(output), @int(len));
-		oo_mthd(cl, "SetProperties", @bool(set_team));
+		oo_mthd(cl, "SetProps", @bool(set_team));
 		oo_mthd(cl, "SetTeam");
 
 		oo_mthd(cl, "ChangeMaxSpeed");
@@ -101,12 +91,14 @@ public oo_init()
 		oo_mthd(cl, "OnKilledBy", @int(attacker), @int(shouldgibs));
 		oo_mthd(cl, "OnThink");
 		oo_mthd(cl, "OnCmdStart", @int(uc), @int(seed));
+
+		oo_smthd(cl, "Change", @int(id), @str(class), @bool(set_props));
 	}
 }
 
 public PlayerClassInfo@Ctor(const name[])
 {
-	new this = oo_this();
+	new this = @this;
 	oo_super_ctor("Assets");
 
 	oo_set_str(this, "name", name);
@@ -119,7 +111,7 @@ public PlayerClassInfo@Ctor(const name[])
 
 public PlayerClassInfo@Dtor()
 {
-	new this = oo_this();
+	new this = @this;
 
 	new Array:player_models_a = Array:oo_get(this, "player_models");
 	new Trie:v_models_t = Trie:oo_get(this, "v_models");
@@ -138,7 +130,7 @@ public PlayerClassInfo@Dtor()
 
 public PlayerClassInfo@Clear()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_call(this, "Assets@Clear");
 
 	ArrayClear(Array:oo_get(this, "player_models"));
@@ -150,6 +142,8 @@ public PlayerClassInfo@Clear()
 	new Trie:replace_sounds_t = Trie:oo_get(this, "replace_sounds");
 	TrieArrayDestory(replace_sounds_t);
 	TrieClear(replace_sounds_t);
+
+	//server_print("PlayerClassInfo@Clear");
 }
 
 public PlayerClassInfo@CreateCvar(const prefix[], const name[], const value[])
@@ -161,7 +155,7 @@ public PlayerClassInfo@CreateCvar(const prefix[], const name[], const value[])
 	if (!pcvar)
 		pcvar = create_cvar(cvar_name, value);
 
-	new Trie:cvars_t = Trie:oo_get(oo_this(), "cvars");
+	new Trie:cvars_t = Trie:oo_get(@this, "cvars");
 	TrieSetCell(cvars_t, name, pcvar);
 	return pcvar;
 }
@@ -173,12 +167,12 @@ public PlayerClassInfo@LoadJson(const filename[])
 	static filepath[64];
 	format(filepath, charsmax(filepath), "playerclass/%s", filename);
 
-	return oo_call(oo_this(), "Assets@LoadJson", filepath);
+	return oo_call(@this, "Assets@LoadJson", filepath);
 }
 
 public PlayerClassInfo@ParseJson(JSON:json)
 {
-	new this = oo_this();
+	new this = @this;
 	oo_call(this, "Assets@ParseJson", json);
 
 	static key[100], value[100];
@@ -187,6 +181,8 @@ public PlayerClassInfo@ParseJson(JSON:json)
 	if (models_j != Invalid_JSON)
 	{
 		new Array:models_a = Array:oo_get(this, "player_models");
+		ArrayClear(models_a);
+		
 		new JSON:value_j = Invalid_JSON;
 		new model[PlayerModel_e];
 		for (new i = json_object_get_count(models_j) - 1; i >= 0; i--)
@@ -314,15 +310,15 @@ public PlayerClassInfo@ParseJson(JSON:json)
 
 public PlayerClassInfo@Clone(any:object)
 {
-	new this = oo_this();
+	new this = @this;
 	oo_call(this, "Assets@Clone", object);
 
-	new Array:player_models_a[2];
-	player_models_a[0] = Array:oo_get(this, "player_models");
-	player_models_a[1] = Array:oo_get(object, "player_models");
-	ArrayDestroy(player_models_a[0]);
-	player_models_a[0] = ArrayClone(player_models_a[1]);
-	oo_set(this, "player_models", player_models_a[0]);
+	new Array:a[2];
+	a[0] = Array:oo_get(this, "player_models");
+	a[1] = Array:oo_get(object, "player_models");
+	ArrayDestroy(a[0]);
+	a[0] = ArrayClone(a[1]);
+	oo_set(this, "player_models", a[0]);
 
 	TrieCopyString(Trie:oo_get(object, "v_models"), Trie:oo_get(this, "v_models"));
 	TrieCopyString(Trie:oo_get(object, "p_models"), Trie:oo_get(this, "p_models"));
@@ -346,23 +342,20 @@ public PlayerClassInfo@Clone(any:object)
 
 public PlayerClass@Ctor(Player:player_o)
 {
-	new this = oo_this();
+	new this = @this;
 	oo_set(this, "player", player_o)
 
 	new id = oo_get(player_o, "player_id");
 	oo_set(this, "player_id", id);
-
-	ExecuteForward(g_Forward[FW_CTOR], g_ForwardResult, id);
 }
 
 public PlayerClass@Dtor()
 {
-	ExecuteForward(g_Forward[FW_DTOR], g_ForwardResult, oo_get(oo_this(), "player_id"));
 }
 
 public PlayerClass@GetCvarPtr(const cvar_name[])
 {
-	new this = oo_this();
+	new this = @this;
 
 	new PlayerClassInfo:info_o = any:oo_call(this, "GetClassInfo");
 	if (info_o == @null)
@@ -383,16 +376,16 @@ public PlayerClass@GetClassInfo()
 
 public PlayerClass@GetClassName(output[], len)
 {
-	new PlayerInfo:info_o = any:oo_call(oo_this(), "GetClassInfo");
+	new PlayerInfo:info_o = any:oo_call(@this, "GetClassInfo");
 	if (info_o == @null)
 		return;
 
 	oo_get_str(info_o, "name", output, len);
 }
 
-public PlayerClass@SetProperties(bool:set_team)
+public PlayerClass@SetProps(bool:set_team)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new id = oo_get(this, "player_id");
 	if (!is_user_alive(id))
@@ -440,15 +433,13 @@ public PlayerClass@SetProperties(bool:set_team)
 
 	if (set_team)
 		oo_call(this, "SetTeam");
-
-	ExecuteForward(g_Forward[FW_SET_PROPS], g_ForwardResult, id, set_team);
 }
 
 public PlayerClass@SetTeam() {}
 
 public PlayerClass@ChangeMaxSpeed()
 {
-	new this = oo_this();
+	new this = @this;
 
 	new player = oo_get(this, "player_id");
 	if (!is_user_alive(player))
@@ -470,7 +461,7 @@ public PlayerClass@ChangeMaxSpeed()
 
 public PlayerClass@ChangeSound(channel, sample[], Float:vol, Float:attn, flags, pitch)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new PlayerClassInfo:info_o = any:oo_call(this, "GetClassInfo");
 	if (info_o == @null)
@@ -505,7 +496,7 @@ public PlayerClass@ChangeSound(channel, sample[], Float:vol, Float:attn, flags, 
 
 public PlayerClass@ChangeWeaponModel(ent)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new player = oo_get(this, "player_id");
 	if (!is_user_alive(player))
@@ -538,7 +529,7 @@ public PlayerClass@ChangeWeaponModel(ent)
 
 public PlayerClass@OnSpawn()
 {
-	oo_call(oo_this(), "SetProperties", true);
+	oo_call(@this, "SetProps", true);
 }
 
 public PlayerClass@OnTakeDamage(inflictor, attacker, &Float:damage, damagebits) {}
@@ -549,6 +540,11 @@ public PlayerClass@OnKilled(victim, shouldgibs) {}
 public PlayerClass@OnKilledBy(attacker, shouldgibs) {}
 public PlayerClass@OnThink() {}
 public PlayerClass@OnCmdStart(uc, seed) {}
+
+public PlayerClass@Change(id, const class[], bool:set_props)
+{
+	return ChangePlayerClass(id, class, set_props);
+}
 
 public plugin_natives()
 {
@@ -627,7 +623,7 @@ public native_change()
 		}
 	}
 	
-	return ChangePlayerClass(id, class_name, bool:get_param(3));
+	return oo_call(0, "PlayerClass@Change", id, class_name, get_param(3));
 }
 
 public CmdPlayerClass(id, level, cid)
@@ -654,14 +650,16 @@ public CmdPlayerClass(id, level, cid)
 	return PLUGIN_HANDLED;
 }
 
-public OO_OnPlayerPreThink(id)
+public OnPlayerPreThink()
 {
+	new id = oo_get(@this, "player_id");
 	if (g_oPlayerClass[id] != @null)
 		oo_call(g_oPlayerClass[id], "OnThink");
 }
 
-public OO_OnPlayerSpawn(id)
+public OnPlayerSpawn()
 {
+	new id = oo_get(@this, "player_id");
 	if (!is_user_alive(id))
 		return;
 
@@ -669,38 +667,52 @@ public OO_OnPlayerSpawn(id)
 		oo_call(g_oPlayerClass[id], "OnSpawn");
 }
 
-public OO_OnPlayerTakeDamage(id, inflictor, attacker, Float:damage, damagebits)
+public OnPlayerTakeDamage(inflictor, attacker, &Float:damage, damagebits)
 {
-	new result;
+	new id = oo_get(@this, "player_id");
+
+	new ret = OO_CONTINUE;
 	if (1 <= attacker <= MaxClients) // valid attacker
 	{
 		if (g_oPlayerClass[attacker] != @null)
-			result = oo_call(g_oPlayerClass[attacker], "OnGiveDamage", inflictor, id, damage, damagebits);
+			ret = oo_call(g_oPlayerClass[attacker], "OnGiveDamage", inflictor, id, damage, damagebits);
 	}
 
-	new result2;
 	if (g_oPlayerClass[id] != @null)
 	{
-		result2 = oo_call(g_oPlayerClass[id], "OnTakeDamage", inflictor, attacker, damage, damagebits);
+		new tmp = oo_call(g_oPlayerClass[id], "OnTakeDamage", inflictor, attacker, damage, damagebits);
+		ret = (tmp > ret) ? tmp : ret;
 	}
 
-	result = (result2 > result) ? result2 : result;
-	return result;
+	if (ret >= OO_SUPERCEDE)
+	{
+		oo_hook_set_return(HC_SUPERCEDE);
+		SetHookChainReturn(ATYPE_INTEGER, 0);
+	}
+	return ret;
 }
 
-public OO_OnPlayerTraceAttack(id, attacker, Float:damage, Float:dir[3], tr, damagebits)
+public OnPlayerTraceAttack(attacker, &Float:damage, Float:dir[3], tr, damagebits)
 {
+	new id = oo_get(@this, "player_id");
+
+	new ret = OO_CONTINUE;
 	if (1 <= attacker <= MaxClients)
 	{
 		if (g_oPlayerClass[attacker] != @null)
-			return oo_call(g_oPlayerClass[attacker], "OnTraceAttack", id, damage, dir, tr, damagebits);
+			ret = oo_call(g_oPlayerClass[attacker], "OnTraceAttack", id, damage, dir, tr, damagebits);
 	}
 
-	return HC_CONTINUE;
+	if (ret >= OO_SUPERCEDE)
+		oo_hook_set_return(HC_SUPERCEDE);
+	
+	return ret;
 }
 
-public OO_OnPlayerTraceAttack_Post(id, attacker, Float:damage, Float:dir[3], tr, damagebits)
+public OnPlayerTraceAttack_Post(attacker, Float:damage, Float:dir[3], tr, damagebits)
 {
+	new id = oo_get(@this, "player_id");
+
 	if (1 <= attacker <= MaxClients)
 	{
 		if (g_oPlayerClass[attacker] != @null)
@@ -708,38 +720,43 @@ public OO_OnPlayerTraceAttack_Post(id, attacker, Float:damage, Float:dir[3], tr,
 	}
 }
 
-public OO_OnPlayerResetMaxSpeed(id)
+public OnPlayerResetMaxSpeed()
 {
+	new id = oo_get(@this, "player_id");
 	if (!is_user_alive(id))
-		return HC_CONTINUE;
+		return;
 
 	if (g_oPlayerClass[id] != @null)
 		oo_call(g_oPlayerClass[id], "ChangeMaxSpeed");
-
-	return HC_CONTINUE;
 }
 
-public OO_OnPlayerKilled(id, attacker, shouldgibs)
+public OnPlayerKilled(attacker, shouldgibs)
 {
-	new result;
+	new id = oo_get(@this, "player_id");
+
+	new ret = OO_CONTINUE;
 	if (1 <= attacker <= MaxClients)
 	{
 		if (g_oPlayerClass[attacker] != @null)
-			result = oo_call(g_oPlayerClass[attacker], "OnKilled", id, shouldgibs);
+			ret = oo_call(g_oPlayerClass[attacker], "OnKilled", id, shouldgibs);
 	}
 
-	new result2;
 	if (g_oPlayerClass[id] != @null)
 	{
-		result2 = oo_call(g_oPlayerClass[id], "OnKilledBy", attacker, shouldgibs);
+		new tmp = oo_call(g_oPlayerClass[id], "OnKilledBy", attacker, shouldgibs);
+		ret = (tmp > ret) ? tmp : ret;
 	}
 
-	result = (result2 > result) ? result2 : result;
-	return result;
+	if (ret >= OO_SUPERCEDE)
+		oo_hook_set_return(HC_SUPERCEDE);
+
+	return ret;
 }
 
-public OO_OnPlayerDtor(id)
+public OnPlayerDtor()
 {
+	new id = oo_get(@this, "player_id");
+	
 	if (g_oPlayerClass[id] != @null)
 	{
 		oo_delete(g_oPlayerClass[id]);
@@ -786,10 +803,6 @@ public OnItemDeploy_Post(ent)
 
 any:ChangePlayerClass(id, const class_name[], bool:set_props=true)
 {
-	ExecuteForward(g_Forward[FW_CHANGE_CLASS], g_ForwardResult, id, class_name, set_props);
-	if (g_ForwardResult == PLUGIN_HANDLED)
-		return g_oPlayerClass[id];
-
 	if (g_oPlayerClass[id] != @null)
 		oo_delete(g_oPlayerClass[id]);
 
@@ -802,9 +815,8 @@ any:ChangePlayerClass(id, const class_name[], bool:set_props=true)
 	g_oPlayerClass[id] = oo_new(class_name, oo_player_get(id));
 
 	if (g_oPlayerClass[id] != @null && set_props)
-		oo_call(g_oPlayerClass[id], "SetProperties", true);
+		oo_call(g_oPlayerClass[id], "SetProps", true);
 
-	ExecuteForward(g_Forward[FW_CHANGE_CLASS_POST], g_ForwardResult, id, class_name, set_props);
 	return g_oPlayerClass[id];
 }
 

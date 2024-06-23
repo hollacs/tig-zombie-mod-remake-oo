@@ -10,7 +10,7 @@ public oo_init()
 	{
 		new const cl[] = "SpecialInfected";
 		oo_mthd(cl, "GetClassInfo");
-		oo_mthd(cl, "SetProperties", @bool(set_team));
+		oo_mthd(cl, "SetProps", @bool(set_team));
 
 		oo_smthd(cl, "ClassInfo");
 	}
@@ -38,11 +38,11 @@ public PlayerClassInfo:SpecialInfected@ClassInfo()
 	return g_oClassInfo;
 }
 
-public SpecialInfected@SetProperties(bool:set_team)
+public SpecialInfected@SetProps(bool:set_team)
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
-	oo_call(this, "Zombie@SetProperties", set_team);
+	oo_call(this, "Zombie@SetProps", set_team);
 
 	new pcvar;
 	if ((pcvar = oo_call(this, "GetCvarPtr", "health2")))

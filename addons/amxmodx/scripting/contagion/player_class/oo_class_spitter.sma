@@ -218,7 +218,7 @@ public PlayerClassInfo:Spitter@GetClassInfo()
 
 public Spitter@OnCmdStart(uc, seed)
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	if (!is_user_alive(id))
@@ -292,7 +292,7 @@ public Spitter@OnCmdStart(uc, seed)
 
 public Spitter@Spit(Float:time)
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	static sound[64];

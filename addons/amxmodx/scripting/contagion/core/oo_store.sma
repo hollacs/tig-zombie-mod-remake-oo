@@ -59,7 +59,7 @@ public oo_init()
 
 public StoreItem@Ctor(price, limit)
 {
-	new this = oo_this();
+	new this = @this;
 	oo_set(this, "price", price);
 	oo_set(this, "limit", limit);
 }
@@ -78,22 +78,22 @@ public StoreItem@CanShowInStoreMenu(id)
 
 public StoreItem@CanBuy(id)
 {
-	return oo_call(oo_this(), "CanUse", id);
+	return oo_call(@this, "CanUse", id);
 }
 
 public StoreItem@Buy(id)
 {
-	oo_call(oo_this(), "Use", id);
+	oo_call(@this, "Use", id);
 }
 
 public StoreItem@GetLimit()
 {
-	return oo_get(oo_this(), "limit");
+	return oo_get(@this, "limit");
 }
 
 public StoreItem@GetPrice()
 {
-	return oo_get(oo_this(), "price");
+	return oo_get(@this, "price");
 }
 
 public StoreItem@GetName(name[], maxlen) { }
@@ -103,7 +103,7 @@ public StoreItem@Use(id) {}
 
 public Store@Ctor()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_set(this, "items", ArrayCreate());
 
 	new Trie:t;
@@ -116,9 +116,9 @@ public Store@Ctor()
 
 public Store@Dtor()
 {
-	new this = oo_this();
+	new this = @this;
 
-	new Array:items_a = Array:oo_get(oo_this(), "items");
+	new Array:items_a = Array:oo_get(@this, "items");
 	ArrayDestroy(items_a);
 
 	new Trie:t;
@@ -141,7 +141,7 @@ public Store@GetItemPrice(id, StoreItem:item_o)
 
 public Store@AddItem(StoreItem:item_o)
 {
-	new Array:items_a = Array:oo_get(oo_this(), "items");
+	new Array:items_a = Array:oo_get(@this, "items");
 	ArrayPushCell(items_a, item_o);
 }
 
@@ -165,7 +165,7 @@ public Store@GetMenuItemName(id, StoreItem:item_o, buffer[], len)
 	if (oo_call(item_o, "GetStoreMenuItemName", id, buffer, len))
 		return;
 
-	new this = oo_this();
+	new this = @this;
 	
 	static name[32], desc[32], limit, price;
 	oo_call(item_o, "GetName", name, charsmax(name));
@@ -187,7 +187,7 @@ public Store@SetPlayerMoney(id, money) {}
 
 public Store@ShowMenu(id, page, time)
 {
-	new this = oo_this();
+	new this = @this;
 	if (!oo_call(this, "CanShowMenu", id))
 		return -1;
 
@@ -224,7 +224,7 @@ public Store@ShowMenu(id, page, time)
 
 public Store@MenuHandler(id, menu, item, StoreItem:item_o)
 {
-	new this = oo_this();
+	new this = @this;
 	if (!oo_call(this, "CanShowMenu", id))
 		return;
 
@@ -236,7 +236,7 @@ public Store@MenuHandler(id, menu, item, StoreItem:item_o)
 
 public Store@CanBuy(id, StoreItem:item_o)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new price = oo_call(this, "GetItemPrice", id, item_o);
 	if (oo_call(this, "GetPlayerMoney", id) < price)
@@ -257,7 +257,7 @@ public Store@CanBuy(id, StoreItem:item_o)
 
 public Store@Buy(id, StoreItem:item_o)
 {
-	new this = oo_this();
+	new this = @this;
 	if (!oo_call(this, "CanBuy", id, item_o))
 		return false;
 
@@ -280,7 +280,7 @@ public Store@Buy(id, StoreItem:item_o)
 
 public Store@GetBuyCount(id, StoreItem:item_o)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new Trie:t;
 	oo_get(this, "buy_count", id, id+1, t, 0, 1);
@@ -297,7 +297,7 @@ public Store@GetBuyCount(id, StoreItem:item_o)
 
 public Store@SetBuyCount(id, StoreItem:item_o, count)
 {
-	new this = oo_this();
+	new this = @this;
 
 	new Trie:t;
 	oo_get(this, "buy_count", id, id+1, t, 0, 1);
@@ -310,7 +310,7 @@ public Store@SetBuyCount(id, StoreItem:item_o, count)
 
 public Store@ResetBuyCount(id, StoreItem:item_o)
 {
-	new this = oo_this();
+	new this = @this;
 
 	static key[16], Trie:t;
 	num_to_str(_:item_o, key, charsmax(key));

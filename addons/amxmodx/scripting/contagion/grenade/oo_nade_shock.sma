@@ -102,7 +102,7 @@ public ShockNade@Dtor()
 
 public ShockNade@SetWorldModel()
 {
-	new this = oo_this();
+	new this = @this;
 	oo_call(this, "Grenade@SetWorldModel");
 
 	new ent = oo_get(this, "ent");
@@ -124,7 +124,7 @@ public ShockNade@SetWorldModel()
 
 public ShockNade@Detonate()
 {
-	new this = oo_this();
+	new this = @this;
 	new ent = oo_get(this, "ent");
 	new attacker = get_entvar(ent, var_owner);
 
@@ -173,7 +173,7 @@ public ShockNade@Detonate()
 
 public ShockNade@DetonateEffect()
 {
-	new this = oo_this();
+	new this = @this;
 	new ent = oo_get(this, "ent");
 
 	static Float:origin[3];

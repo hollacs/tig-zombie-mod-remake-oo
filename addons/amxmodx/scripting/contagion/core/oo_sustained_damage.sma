@@ -33,7 +33,7 @@ public oo_init()
 
 public SustainedDamage@Ctor(player, attacker, Float:interval, Float:damage, times)
 {
-	new this = oo_this();
+	new this = @this;
 	oo_set(this, "player_id", player);
 	oo_set(this, "attacker", attacker);
 	oo_set(this, "interval", interval);
@@ -47,9 +47,10 @@ public SustainedDamage@Dtor() {}
 
 public SustainedDamage@OnUpdate()
 {
-	new this = oo_this();
+	new this = @this;
 	if (oo_get(this, "killme"))
 	{
+		//server_print("kill me");
 		oo_call(this, "Delete");
 		return;
 	}
@@ -76,7 +77,7 @@ public SustainedDamage@OnUpdate()
 
 public SustainedDamage@Damage()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 
 	new Float:damage = Float:oo_get(this, "damage");
@@ -93,7 +94,7 @@ public SustainedDamage@Damage()
 
 public SustainedDamage@Death()
 {
-	new this = oo_this();
+	new this = @this;
 	new id = oo_get(this, "player_id");
 	new attacker = oo_get(this, "attacker");
 
