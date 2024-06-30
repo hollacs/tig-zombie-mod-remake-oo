@@ -52,8 +52,11 @@ public any:ZombieRaceMenu@GetInstance()
 
 public OnPlayerClassChange(id, const class[], bool:set_props)
 {
-	return oo_call(g_oMenu, "HandlePlayerClassChange", id, class, set_props) ?
-		OO_SUPERCEDE : OO_CONTINUE;
+	static new_class[32];
+	if (oo_call(g_oMenu, "HandlePlayerClassChange", id, class, new_class, charsmax(new_class)))
+	{
+		oo_hook_set_param(2, OO_STRING, new_class);
+	}
 }
 
 public OnPlayerDtor()
