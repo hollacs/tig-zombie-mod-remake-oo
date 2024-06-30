@@ -19,6 +19,7 @@ public plugin_init()
 	oo_hook_mthd("Player", "OnTakeDamage", "OnPlayerTakeDamage");
 	oo_hook_mthd("Player", "OnKilled", "OnPlayerKilled");
 	oo_hook_mthd("PlayerClass", "Change", "OnPlayerClassChange");
+	RegisterHookChain(RG_RoundEnd, "OnRoundEnd");
 
 	bind_pcvar_num(create_cvar("ctg_kill_boss_xp", "200"), cvar_kill_boss_xp);
 	bind_pcvar_num(create_cvar("ctg_kill_special_xp", "50"), cvar_kill_special_xp);
@@ -34,6 +35,35 @@ public plugin_init()
 
 	bind_pcvar_float(create_cvar("ctg_damage_human_amount", "750"), cvar_damage_human_amount);
 	bind_pcvar_num(create_cvar("ctg_damage_human_xp", "10"), cvar_damage_human_xp);
+}
+
+public OnRoundEnd(WinStatus:status, ScenarioEventEndRound:event, Float:tmDelay)
+{
+	switch (status)
+	{
+		case WINSTATUS_CTS:
+		{
+			for (new i = 1; i <= MaxClients; i++)
+			{
+				if (is_user_alive(i) && oo_playerclass_isa(i, "Human"))
+				{
+					ctg_add_player_exp(i, 20);
+					rg_add_account(i, 20)
+				}
+			}
+		}
+		case WINSTATUS_TERRORISTS:
+		{
+			for (new i = 1; i <= MaxClients; i++)
+			{
+				if (is_user_alive(i) && oo_playerclass_isa(i, "Zombie"))
+				{
+					ctg_add_player_exp(i, 15);
+					rg_add_account(i, 15)
+				}
+			}
+		}
+	}
 }
 
 public OnPlayerClassChange(id, const class[], bool:set_props)
@@ -59,6 +89,7 @@ public OnPlayerTakeDamage(inflictor, attacker, &Float:damage, damagebits)
 	{
 		g_Damage[attacker] = 0.0;
 		ctg_add_player_exp(attacker, (is_zombie) ? cvar_damage_zombie_xp : cvar_damage_human_xp, true);
+		rg_add_account(attacker, 10);
 	}
 }
 
@@ -69,22 +100,41 @@ public OnPlayerKilled(killer)
 		return;
 	
 	new add_exp = 0;
+	new add_money = 0;
 
 	if (oo_playerclass_isa(victim, "Zombie"))
 	{
 		if (oo_playerclass_isa(victim, "Boss"))
+		{
 			add_exp = cvar_kill_boss_xp;
+			add_money = 100;
+		}
 		else if (oo_playerclass_isa(victim, "SpecialInfected"))
+		{
 			add_exp = cvar_kill_special_xp;
+			add_money = 50;
+		}
 		else
+		{
 			add_exp = cvar_kill_zombie_xp;
+			add_money = 10;
+		}
+
+		rg_add_account(victim, 1);
+		ctg_add_player_exp(victim, 5, true);
 	}
 	else
 	{
 		if (oo_playerclass_isa(victim, "Leader"))
+		{
 			add_exp = cvar_kill_leader_xp;
+			add_money = 50;
+		}
 		else
+		{
 			add_exp = cvar_kill_human_xp;
+			add_money = 15;
+		}
 	}
 
 	if (get_member(victim, m_LastHitGroup) == HIT_HEAD)
@@ -93,6 +143,7 @@ public OnPlayerKilled(killer)
 	add_exp = floatround(add_exp * (1.0 + random_float(-cvar_kill_random_xp, cvar_kill_random_xp)));
 
 	ctg_add_player_exp(killer, add_exp, true);
+	rg_add_account(killer, add_money);
 }
 
 public CTG_OnPlayerAddExp_Post(id, exp, bool:notify)
