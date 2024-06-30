@@ -4,7 +4,7 @@
 #include <oo_player_class>
 #include <oo_player_status>
 #include <cs_painshock>
-#include <player_rendering_layer>
+#include <render_layer>
 
 public plugin_init()
 {
@@ -57,7 +57,7 @@ public RampageStatus@Ctor(player, Float:duration, Float:speed, Float:takedmg)
 
 	SetFov(player, 110);
 
-	render_push(player, kRenderFxGlowShell, Float:{0.0, 255.0, 0.0}, kRenderNormal, 16.0, duration, "rampage");
+	render_push(player, kRenderFxGlowShell, {0, 255, 0}, kRenderNormal, 16, duration, "rampage", 9);
 
 	RequestFrame("ResetMaxSpeed", player);
 }

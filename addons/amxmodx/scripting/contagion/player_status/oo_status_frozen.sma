@@ -6,7 +6,7 @@
 #include <oo_player_class>
 #include <oo_player_status>
 #include <oo_assets>
-#include <player_rendering_layer>
+#include <render_layer>
 
 #define UNIT_SECOND (1<<12)
 #define FFADE_IN 0x0000
@@ -102,7 +102,7 @@ public FrozenStatus@Ctor(id, Float:freezetime)
 	if (AssetsGetRandomSound(g_oAssets, "freeze", sound, charsmax(sound)))
 		emit_sound(id, CHAN_BODY, sound, 1.0, ATTN_NORM, 0, PITCH_NORM);
 
-	render_push(id, kRenderFxGlowShell, Float:{0.0, 200.0, 200.0}, kRenderNormal, 16.0, freezetime, "freeze");
+	render_push(id, kRenderFxGlowShell, {0, 200, 200}, kRenderNormal, 16, freezetime, "freeze", 10);
 }
 
 public FrozenStatus@Dtor()
