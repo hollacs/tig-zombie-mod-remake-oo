@@ -79,7 +79,7 @@ stock AssetsClone(any:this, any:other)
 
 stock bool:AssetsLoadJson(any:this, const filename[])
 {
-	CHECK_OBJ(this, false);
+	CHECK_OBJ(this, false)
 
-	return oo_call(this, "LoadJson", filename);
+	return bool:oo_call(this, "LoadJson", filename);
 }
