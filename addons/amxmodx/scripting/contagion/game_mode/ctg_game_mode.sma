@@ -56,6 +56,7 @@ public oo_init()
 		oo_mthd(cl, "ChooseSpecialInfected", @int(id));
 		oo_mthd(cl, "GetWeight");
 		oo_mthd(cl, "GetRoundMaxSpecialInfected");
+		oo_mthd(cl, "SetPlayerRespawn", @int(id), @fl(delay));
 
 		oo_mthd(cl, "OnThink");
 		oo_mthd(cl, "OnRestartRound");
@@ -70,9 +71,10 @@ public oo_init()
 		oo_mthd(cl, "OnPlayerKilled", @int(id), @int(attacker), @int(shouldgib));
 		oo_mthd(cl, "OnGiveDefaultItems", @int(id));
 		oo_mthd(cl, "OnPlayerRespawn", @int(id));
+		oo_mthd(cl, "OnPlayerDtor", @int(id));
 
 		oo_smthd(cl, "Assets");
-		oo_smthd(cl, "AddGameMode");
+		oo_smthd(cl, "AddGameMode", @obj(object));
 		oo_smthd(cl, "ChooseGameMode");
 		oo_smthd(cl, "GetInstance");
 	}
@@ -85,11 +87,15 @@ public plugin_precache()
 
 	g_oAssets = oo_new("Assets");
 	oo_call(g_oAssets, "LoadJson", "gamemode/contagion.json");
+
+	g_aGameModes = ArrayCreate(1);
 }
 
 public plugin_init()
 {
 	register_plugin("[CTG] Game Mode", "0.1", "holla");
+
+	oo_hook_dtor("Player", "OnPlayerDtor");
 
 	new pcvar = create_cvar("ctg_gamemode_start_delay", "20");
 	bind_pcvar_float(pcvar, cvar_wait);
@@ -106,9 +112,6 @@ public plugin_init()
 
 	set_member_game(m_bTCantBuy, true);
 	set_member_game(m_bCTCantBuy, true);
-
-	server_cmd("sv_restart 1");
-	server_exec();
 }
 
 public plugin_natives()
@@ -226,15 +229,22 @@ public ContagionGame@ChooseSpecialInfected(id)
 
 	for (new i = 0; i < sizeof SPECIAL_INFECTED_CLASS; i++)
 	{
-		v = oo_get(this, "special_infected", i, i+1, v, 0, 1);
+		oo_get(this, "special_infected", i, i+1, v, 0, 1);
 		if (!v)
 			list[num++] = i;
 	}
 
 	if (num < 1)
-		return false;
+	{
+		for (new i = 0; i < sizeof SPECIAL_INFECTED_CLASS; i++)
+		{
+			oo_set(this, "special_infected", i, i+1, false, 0, 1);
+			list[i] = i;
+		}
+	}
 
 	new rindex = list[random(num)];
+
 	oo_playerclass_change(id, SPECIAL_INFECTED_CLASS[rindex]);
 	oo_set(this, "special_infected", rindex, rindex+1, true, 0, 1);
 	oo_set(this, "next_special_infected", get_gametime() + random_float(40.0, 100.0));
@@ -305,7 +315,7 @@ public GameMode:ContagionGame@ChooseGameMode()
 		mode_o = any:ArrayGetCell(g_aGameModes, i);
 		random -= oo_call(mode_o, "GetWeight");
 
-		if (random <= 0.0)
+		if (random <= 0)
 			return mode_o;
 	}
 
@@ -367,7 +377,7 @@ public ContagionGame@OnThink()
 	}
 }
 
-public ContagionGame@OnClientDisconnect(id)
+public ContagionGame@OnPlayerDtor(id)
 {
 	new this = @this;
 	if (oo_get(this, "leader") == id)
@@ -577,6 +587,11 @@ public ContagionGame@OnPlayerSpawn(id)
 	oo_call(@this, "GameMode@OnPlayerSpawn", id);
 }
 
+public ContagionGame@SetPlayerRespawn(id, Float:delay)
+{
+	oo_player_set_respawn(id, delay);
+}
+
 public ContagionGame@OnPlayerKilled(id, attacker, shouldgib)
 {
 	new this = @this;
@@ -584,7 +599,7 @@ public ContagionGame@OnPlayerKilled(id, attacker, shouldgib)
 
 	if (oo_call(this, "CanPlayerRespawn", id))
 	{
-		oo_player_set_respawn(id, 5.0);
+		oo_call(this, "SetPlayerRespawn", id, 5.0);
 	}
 
 	if (oo_get(this, "boss") == id && !oo_get(this, "boss_dead"))
@@ -669,8 +684,6 @@ public ContagionGame@OnPlayerTakeDamage(victim, inflictor, attacker, &Float:dama
 			message_end();
 
 			oo_call(this, "InfectPlayer", victim, attacker);
-			cs_painshock_set(victim, 0.0);
-			set_entvar(victim, var_health, Float:get_entvar(victim, var_health) * 0.5);
 			SetHookChainReturn(ATYPE_INTEGER, 0);
 			return true;
 		}
@@ -700,7 +713,7 @@ public ContagionGame@InfectPlayer(victim, attacker)
 	write_byte(attacker);
 	write_byte(victim);
 	write_byte(0);
-	write_string("infection");
+	write_string("teammate");
 	message_end();
 
 	static msgScoreAttrib;
@@ -737,6 +750,9 @@ public ContagionGame@InfectPlayer(victim, attacker)
 		oo_set(this, "leader_dead", true);
 	}
 
+	cs_painshock_set(victim, 0.0);
+	set_entvar(victim, var_health, Float:get_entvar(victim, var_health) * 0.5);
+
 	ExecuteForward(g_fwInfectPlayer[1], ret, victim, attacker);
 }
 
@@ -762,8 +778,6 @@ public ContagionGame@OnRestartRound()
 		
 		oo_playerclass_change(i, "Human", false);
 	}
-
-	oo_gamemode_set(oo_call(0, "ContagionGame@ChooseGameMode"));
 }
 
 public ContagionGame@OnRestartRound_Post()
@@ -829,8 +843,13 @@ public TaskChangeTeam(id)
 	}
 }
 
-public client_disconnected(id)
+public OnPlayerDtor()
 {
+	new id = oo_get(@this, "player_id");
+
+	if (oo_gamemode_isa("ContagionGame"))
+		oo_call(oo_gamemode_get(), "OnPlayerDtor", id);
+
 	remove_task(id);
 }
 
