@@ -63,6 +63,7 @@ public plugin_init()
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_nemesis", "armor_penetration", "0.25");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_nemesis", "knockback", "0.5");
 	oo_call(g_oClassInfo, "CreateCvar", "ctg_nemesis", "painshock", "0.6");
+	oo_call(g_oClassInfo, "CreateCvar", "ctg_nemesis", "rampage_duration", "7.0"); // 暴走持續時間
 
 	AssetsGetModel(g_oClassInfo, "rocket", model_rocket, charsmax(model_rocket));
 	sprite_trail = AssetsGetSprite(g_oClassInfo, "trail");
@@ -194,7 +195,8 @@ public Nemesis@SetProps(bool:set_team)
 		oo_player_set_max_health(id, floatround(Float:get_entvar(id, var_health)));
 	}
 
-	oo_set(this, "rpg_reloaded", true);
+	oo_set(this, "rpg_reloaded", false);
+	oo_set(this, "rpg_next_fire", get_gametime() + 10.0);
 }
 
 public Nemesis@OnCmdStart(uc, seed)
