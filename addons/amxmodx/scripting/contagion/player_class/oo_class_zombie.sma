@@ -51,6 +51,7 @@ public oo_init()
 		oo_mthd(cl, "OnKnifeAttack1_Post", OO_CELL);
 		oo_mthd(cl, "OnKnifeAttack2_Post", OO_CELL);
 		oo_mthd(cl, "Rampage");
+		oo_mthd(cl, "OnKilledBy", @int(attacker), @int(shouldgib));
 
 		oo_smthd(cl, "ClassInfo");
 	}
@@ -110,7 +111,7 @@ public ZombieClassInfo@CreateCvars()
 	oo_call(this, "CreateCvar", "ctg_zombie", "ap_restore_max", "100"); // 最大能恢復的護甲值
 	oo_call(this, "CreateCvar", "ctg_zombie", "ap_restore_time", "1.0"); // 自動回甲的時間
 	oo_call(this, "CreateCvar", "ctg_zombie", "ap_restore_amt", "1"); // 每次回多少甲
-	oo_call(this, "CreateCvar", "ctg_zombie", "rampage_duration", "7.0"); // 暴走持續時間
+	oo_call(this, "CreateCvar", "ctg_zombie", "rampage_duration", "5.0"); // 暴走持續時間
 	oo_call(this, "CreateCvar", "ctg_zombie", "rampage_speed", "1.3"); // 暴走速度
 	oo_call(this, "CreateCvar", "ctg_zombie", "rampage_takedmg", "1.2"); // 暴走時承受的傷害倍率
 	oo_call(this, "CreateCvar", "ctg_zombie", "rampage_needed", "100"); // 暴走需要的護甲值
@@ -162,6 +163,11 @@ public Zombie@Dtor()
 public PlayerClassInfo:Zombie@GetClassInfo()
 {
 	return g_oClassInfo;
+}
+
+public Zombie@OnKilledBy(attacker, shouldgib)
+{
+	
 }
 
 public Zombie@SetTeam()
