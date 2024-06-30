@@ -34,7 +34,7 @@ public oo_init()
 		oo_mthd(cl, "GetItemName", @int(id), @obj(race), @stref(output), @int(len));
 		oo_mthd(cl, "ShowMenu", @int(id));
 		oo_mthd(cl, "HandleMenu", @int(id), @int(menu), @int(item));
-		oo_mthd(cl, "HandlePlayerClassChange", @int(id), @str(class), @bool(set_props));
+		oo_mthd(cl, "HandlePlayerClassChange", @int(id), @str(class), @stref(new_class), @int(len));
 		oo_mthd(cl, "GetPlayerNextRace", @int(id));
 		oo_mthd(cl, "SetPlayerNextRace", @int(id), @obj(race));
 
@@ -137,7 +137,7 @@ public PlayerRaceMenu@HandleMenu(id, menu, item)
 	oo_call(this, "SetPlayerNextRace", id, race_o);
 }
 
-public PlayerRaceMenu@HandlePlayerClassChange(id, const class[], bool:set_props)
+public PlayerRaceMenu@HandlePlayerClassChange(id, const class[], new_class[], len)
 {
 	new this = @this;
 	if (TrieKeyExists(Trie:oo_get(this, "classes"), class))
@@ -146,20 +146,7 @@ public PlayerRaceMenu@HandlePlayerClassChange(id, const class[], bool:set_props)
 		new next_race = oo_call(this, "GetPlayerNextRace", id);
 		new PlayerRace:race_o = (next_race == @null) ? ArrayGetCell(races_a, random(ArraySize(races_a))) : next_race;
 
-		new PlayerClass:class_o = oo_playerclass_get(id);
-		if (class_o != @null)
-			oo_delete(class_o);
-
-		static classname[32];
-		oo_get_str(race_o, "class", classname, charsmax(classname));
-
-		class_o = oo_new(classname, oo_player_get(id));
-		oo_playerclass_set(id, class_o);
-
-		if (set_props)
-			oo_call(class_o, "SetProps", true);
-		
-		oo_hook_set_return(_:class_o);
+		oo_get_str(race_o, "class", new_class, len);
 		return true;
 	}
 
